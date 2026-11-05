@@ -34,7 +34,7 @@ from src.rag_pipeline import RAGPipeline
 from src.llm_client import LLMClient
 from src.evaluator import RAGEvaluator
 
-app = FastAPI(title="Enterprise Document Assistant API")
+app = FastAPI(title="voidai API")
 
 # Enable CORS
 app.add_middleware(
@@ -174,3 +174,4 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host="0.0.0.0", port=8501, reload=False)
+
