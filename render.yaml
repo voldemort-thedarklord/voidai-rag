@@ -24,3 +24,4 @@ services:
         value: https://settled-moccasin-3297.clerk.accounts.dev
       - key: DEFAULT_GEMINI_MODEL
         value: gemini-flash-lite-latest
+
