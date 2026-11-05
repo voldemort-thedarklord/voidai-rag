@@ -1,0 +1,32 @@
+ACME ENTERPRISE CORP - HUMAN RESOURCES DEPARTMENT
+DOCUMENT ID: HR-POL-2025-V2
+TITLE: Employee Leave, Benefits, and Attendance Policy
+EFFECTIVE DATE: January 1, 2025
+AUDIENCE: All Full-Time and Contract Employees
+
+1. PURPOSE AND SCOPE
+This policy outlines the leave entitlements, attendance expectations, and workplace flexibilities for all employees of Acme Enterprise Corp.
+
+2. ANNUAL PAID TIME OFF (PTO)
+2.1 All full-time employees accrue 24 days of Paid Time Off (PTO) per calendar year, accrued at the rate of 2 days per completed month of service.
+2.2 A maximum of 8 unused PTO days may be carried over into the following calendar year. Any carried-over days must be utilized before March 31st of the new year, or they will lapse without financial encashment.
+2.3 PTO requests exceeding 3 consecutive business days require at least two weeks advance notice submitted via the HR Portal and written approval from the reporting manager.
+
+3. SICK AND MEDICAL LEAVE
+3.1 Employees are allotted 12 days of paid sick leave per annum, credited on January 1st of each calendar year.
+3.2 For sick leave exceeding three (3) consecutive business days, an authorized medical practitioner's certificate must be submitted to the HR Operations desk upon return.
+3.3 Critical illness leave of up to 30 paid calendar days may be granted upon approval of the Chief Human Resources Officer (CHRO) and submission of hospital records.
+
+4. PARENTAL LEAVE
+4.1 Maternity Leave: Female employees who have completed at least 180 continuous days of employment are entitled to 26 consecutive weeks of fully paid maternity leave for their first two children. Additional leave up to 8 weeks unpaid may be requested.
+4.2 Paternity Leave: Male employees and secondary caregivers are entitled to 4 consecutive weeks of fully paid paternity leave, which may be taken within 12 months following the birth or formal adoption of a child.
+4.3 Adoption Leave: Primary adoptive parents receive 16 weeks of paid leave for adopting a child below the age of 5.
+
+5. REMOTE WORK AND CORE HOURS
+5.1 Acme operates on a hybrid schedule. Employees are required to be present on-site at their designated office location a minimum of two (2) days per week (Tuesday and Thursday are designated collaboration days).
+5.2 Core collaboration hours are 10:00 AM to 4:00 PM in the employee's local time zone, during which team members must be reachable via Slack and email.
+5.3 An annual home-office ergonomic stipend of $600 is reimbursable during the first quarter of employment.
+
+6. BEREAVEMENT AND COMPASSIONATE LEAVE
+6.1 Employees are granted up to five (5) paid business days in the unfortunate event of the death of an immediate family member (spouse, child, parent, sibling).
+6.2 Up to three (3) paid business days are granted for extended family members (grandparents, in-laws).

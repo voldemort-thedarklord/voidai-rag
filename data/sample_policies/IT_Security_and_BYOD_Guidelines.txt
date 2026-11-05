@@ -1,0 +1,24 @@
+ACME ENTERPRISE CORP - INFORMATION SECURITY & INFRASTRUCTURE
+DOCUMENT ID: SEC-STD-2025-01
+TITLE: Information Security, Acceptable Use, and BYOD Standards
+EFFECTIVE DATE: February 1, 2025
+CLASSIFICATION: Internal Restricted
+
+1. ACCESS CONTROL AND PASSWORDS
+1.1 Passwords for all Acme enterprise accounts must be at least 14 characters in length and include uppercase, lowercase, numerical, and special characters.
+1.2 Password expiration cycles are set to 90 days. Users may not reuse any of their last 6 previous passwords.
+1.3 Multi-Factor Authentication (MFA) via hardware security key (FIDO2) or authenticator app (e.g., Okta Verify, Google Authenticator) is mandatory on all corporate single sign-on (SSO) gateways. SMS-based 2FA is explicitly forbidden due to SIM-swapping vulnerabilities.
+
+2. DEVICE MANAGEMENT AND BYOD (BRING YOUR OWN DEVICE)
+2.1 All corporate-issued laptops must have Full Disk Encryption (BitLocker / FileVault) enabled with keys escrowed in Acme Mobile Device Management (MDM - Kandji/InTune).
+2.2 Personal devices (smartphones/tablets) accessing corporate email, Slack, or GitHub must install Acme's endpoint management profile. Devices jailbroken or rooted are strictly banned and will be blocked automatically at the zero-trust perimeter.
+2.3 In the event of a lost or stolen device, the employee must report the incident to the Security Operations Center (soc@acme-corp.internal) within two (2) hours of discovery. An immediate remote cryptographic wipe will be initiated.
+
+3. SOFTWARE, SHADOW IT, AND AI TOOLS
+3.1 Employees are prohibited from installing unvetted third-party software, browser extensions, or utilities without written authorization from the IT Architecture Review Board.
+3.2 Proprietary corporate source code, customer personal data (PII), and financial datasets must NEVER be pasted into public, non-enterprise generative AI tools (such as public ChatGPT or free online converters). Only company-sanctioned internal enterprise RAG assistants and approved enterprise tenants may process internal data.
+3.3 Cloud storage services (such as personal Dropbox, Google Drive, or iCloud) are blocked on all managed networks and endpoints.
+
+4. REMOTE CONNECTIVITY AND VPN
+4.1 Public Wi-Fi networks (cafes, airports, hotels) must only be accessed through the Acme WireGuard Zero-Trust Network Access (ZTNA) tunnel.
+4.2 Split tunneling is disabled on all remote VPN profiles to enforce full security inspection.

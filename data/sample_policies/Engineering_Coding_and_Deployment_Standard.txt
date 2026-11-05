@@ -1,0 +1,25 @@
+ACME ENTERPRISE CORP - ENGINEERING & DEVSECOPS
+DOCUMENT ID: ENG-SOP-2025-08
+TITLE: Software Engineering Standards, Code Review, and CI/CD Guidelines
+EFFECTIVE DATE: April 1, 2025
+CLASSIFICATION: Internal Restricted (Engineering Department)
+
+1. REPOSITORY MANAGEMENT AND BRANCHING STRATEGY
+1.1 Acme Engineering follows a trunk-based development strategy with short-lived feature branches prefixed by issue ticket keys (e.g., `feat/ENG-1204-auth-sso`).
+1.2 Direct commits to `main` and `release/*` branches are strictly prohibited through enforced GitHub branch protection rules.
+1.3 All Pull Requests (PRs) require a minimum of two (2) peer approvals from code owners before merging. For security-sensitive modules (crypto, auth, billing), at least one sign-off must come from the AppSec team.
+
+2. CODE QUALITY, TESTING, AND COVERAGE
+2.1 Unit and integration test coverage must be maintained at a minimum threshold of 80% line coverage for all new or modified code. PRs that drop overall repository coverage will automatically fail CI pipeline checks.
+2.2 Static Application Security Testing (SAST) via Semgrep and container image vulnerability scanning (Trivy) must report zero High or Critical vulnerabilities prior to staging deployment.
+2.3 Code formatting is strictly enforced across repositories using Ruff / Black for Python, Prettier for TypeScript/JavaScript, and gofmt for Go.
+
+3. CI/CD AND DEPLOYMENT PROCEDURES
+3.1 Production deployments are conducted exclusively via automated GitHub Actions pipelines triggered by signed Git tags.
+3.2 Deployment Windows: Production releases are permissible Monday through Thursday between 09:00 AM and 03:00 PM UTC. Releases on Fridays, weekends, or company holidays are forbidden (except for P0 hotfixes with explicit VP of Engineering sign-off).
+3.3 Rollback Protocol: Every release must have an automated canary verification phase (5% traffic for 15 minutes). If error rates exceed 0.05% or P99 latency degrades by more than 20%, the deployment automatically halts and rolls back to the previous stable SHA.
+
+4. INCIDENT MANAGEMENT AND SEVERITY LEVELS
+4.1 P0 (Critical Outage): User-facing customer outage affecting >10% of traffic. Response SLA is 15 minutes. War room initiated on Zoom bridge.
+4.2 P1 (Major Degraded Service): Core functionality impaired with partial workaround. Response SLA is 1 hour.
+4.3 P2 / P3 (Minor defect or internal tool issue): Response SLA is 24 to 72 business hours.
