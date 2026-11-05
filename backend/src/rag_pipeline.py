@@ -10,7 +10,9 @@ from typing import Dict, Any, List, Optional
 
 from src.config import (
     DEFAULT_TOP_K,
-    DEFAULT_OLLAMA_MODEL
+    DEFAULT_OLLAMA_MODEL,
+    DEFAULT_GEMINI_MODEL,
+    DEFAULT_LLM_PROVIDER
 )
 from src.vector_store import VectorStoreManager
 from src.llm_client import LLMClient

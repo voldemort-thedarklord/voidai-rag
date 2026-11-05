@@ -1,7 +1,7 @@
 """
 Unified LLM Client
 Provides a clean, modular abstraction for querying Local Ollama
-and Cloud LLM providers (Groq, OpenAI, Google Gemini).
+and Cloud LLM providers (Google Gemini, Groq, OpenAI), with automatic local fallback.
 """
 
 import json
@@ -11,6 +11,7 @@ import requests
 from src.config import (
     OLLAMA_BASE_URL,
     DEFAULT_OLLAMA_MODEL,
+    DEFAULT_GEMINI_MODEL,
     GROQ_API_KEY,
     OPENAI_API_KEY,
     GEMINI_API_KEY
@@ -18,17 +19,23 @@ from src.config import (
 
 
 class LLMClient:
-    """Dispatches generation requests to Ollama or Cloud APIs."""
+    """Dispatches generation requests to Cloud APIs (Gemini) or Ollama with failover."""
 
     def __init__(
         self,
-        provider: str = "ollama",
-        model: str = DEFAULT_OLLAMA_MODEL,
-        temperature: float = 0.1
+        provider: str = "gemini",
+        model: Optional[str] = None,
+        temperature: float = 0.1,
+        fallback_to_ollama: bool = True
     ):
-        self.provider = provider.lower()
-        self.model = model
+        self.provider = (provider or "gemini").lower()
         self.temperature = temperature
+        self.fallback_to_ollama = fallback_to_ollama
+
+        if self.provider == "gemini":
+            self.model = model or DEFAULT_GEMINI_MODEL
+        else:
+            self.model = model or DEFAULT_OLLAMA_MODEL
 
     @staticmethod
     def get_available_ollama_models() -> List[str]:
@@ -46,24 +53,88 @@ class LLMClient:
 
     def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """
-        Generate completion based on configured provider.
+        Generate completion based on configured provider, with automatic failover.
         """
-        if self.provider == "ollama":
+        if self.provider == "gemini":
+            res = self._call_gemini(prompt, system_prompt)
+            # If Gemini returned an error and fallback is enabled, try local Ollama
+            if res.startswith("⚠️") and self.fallback_to_ollama:
+                err_msg = res.split("\n")[0].replace("⚠️ ", "")
+                ollama_res = self._call_ollama(prompt, system_prompt)
+                if not ollama_res.startswith("⚠️"):
+                    return f"{ollama_res}\n\n*(Note: Cloud Gemini was unavailable: {err_msg}. Answered via Local Ollama)*"
+            return res
+
+        elif self.provider == "ollama":
             return self._call_ollama(prompt, system_prompt)
         elif self.provider == "groq":
             return self._call_groq(prompt, system_prompt)
         elif self.provider == "openai":
             return self._call_openai(prompt, system_prompt)
-        elif self.provider == "gemini":
-            return self._call_gemini(prompt, system_prompt)
         else:
             raise ValueError(f"Unsupported LLM provider: {self.provider}")
+
+    def _call_gemini(self, prompt: str, system_prompt: Optional[str]) -> str:
+        """Query Google Gemini API with support for 2.5-flash and 1.5-flash."""
+        api_key = GEMINI_API_KEY
+        if not api_key:
+            return "⚠️ Gemini API Key missing in .env (GEMINI_API_KEY)."
+
+        model_name = self.model if "gemini" in (self.model or "") else DEFAULT_GEMINI_MODEL
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+        headers = {"Content-Type": "application/json"}
+
+        payload: Dict[str, Any] = {
+            "contents": [
+                {
+                    "parts": [{"text": prompt}]
+                }
+            ],
+            "generationConfig": {
+                "temperature": self.temperature
+            }
+        }
+
+        if system_prompt:
+            payload["system_instruction"] = {
+                "parts": [{"text": system_prompt}]
+            }
+
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=35)
+            if resp.status_code == 200:
+                data = resp.json()
+                candidates = data.get("candidates", [])
+                if candidates and "content" in candidates[0]:
+                    parts = candidates[0]["content"].get("parts", [])
+                    if parts:
+                        return parts[0].get("text", "").strip()
+                return "The model returned an empty response."
+
+            # If 503 (high demand) or 404, try backup model gemini-3.5-flash-lite
+            elif resp.status_code in (503, 404) and model_name != "gemini-3.5-flash-lite":
+                fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={api_key}"
+                fallback_resp = requests.post(fallback_url, headers=headers, json=payload, timeout=35)
+                if fallback_resp.status_code == 200:
+                    fb_data = fallback_resp.json()
+                    candidates = fb_data.get("candidates", [])
+                    if candidates and "content" in candidates[0]:
+                        parts = candidates[0]["content"].get("parts", [])
+                        if parts:
+                            return parts[0].get("text", "").strip()
+
+            return f"⚠️ Gemini API Error ({resp.status_code}): {resp.text}"
+
+        except requests.exceptions.Timeout:
+            return "⚠️ Gemini request timed out after 35 seconds."
+        except Exception as e:
+            return f"⚠️ Error querying Gemini: {str(e)}"
 
     def _call_ollama(self, prompt: str, system_prompt: Optional[str]) -> str:
         """Query local Ollama server."""
         url = f"{OLLAMA_BASE_URL}/api/generate"
         payload = {
-            "model": self.model or "llama3:latest",
+            "model": self.model if self.model and "llama" in self.model else "llama3:latest",
             "prompt": prompt,
             "system": system_prompt or "",
             "stream": False,
@@ -93,7 +164,7 @@ class LLMClient:
         """Query Groq cloud API using OpenAI-compatible endpoint."""
         api_key = GROQ_API_KEY
         if not api_key:
-            return "⚠️ Groq API Key missing. Please provide `GROQ_API_KEY` in .env or the UI."
+            return "⚠️ Groq API Key missing. Please provide `GROQ_API_KEY` in .env."
 
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -106,7 +177,7 @@ class LLMClient:
         messages.append({"role": "user", "content": prompt})
 
         payload = {
-            "model": self.model if "llama" in self.model else "llama-3.3-70b-versatile",
+            "model": "llama-3.3-70b-versatile",
             "messages": messages,
             "temperature": self.temperature
         }
@@ -123,7 +194,7 @@ class LLMClient:
         """Query OpenAI API."""
         api_key = OPENAI_API_KEY
         if not api_key:
-            return "⚠️ OpenAI API Key missing. Please provide `OPENAI_API_KEY` in .env or the UI."
+            return "⚠️ OpenAI API Key missing. Please provide `OPENAI_API_KEY` in .env."
 
         url = "https://api.openai.com/v1/chat/completions"
         headers = {
@@ -136,7 +207,7 @@ class LLMClient:
         messages.append({"role": "user", "content": prompt})
 
         payload = {
-            "model": self.model if "gpt" in self.model else "gpt-4o-mini",
+            "model": "gpt-4o-mini",
             "messages": messages,
             "temperature": self.temperature
         }
@@ -148,38 +219,3 @@ class LLMClient:
             return f"⚠️ OpenAI API Error ({resp.status_code}): {resp.text}"
         except Exception as e:
             return f"⚠️ Error querying OpenAI: {str(e)}"
-
-    def _call_gemini(self, prompt: str, system_prompt: Optional[str]) -> str:
-        """Query Google Gemini API via REST endpoint."""
-        api_key = GEMINI_API_KEY
-        if not api_key:
-            return "⚠️ Gemini API Key missing. Please provide `GEMINI_API_KEY` in .env or the UI."
-
-        model_name = self.model if "gemini" in self.model else "gemini-1.5-flash"
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-        headers = {"Content-Type": "application/json"}
-
-        full_prompt = f"{system_prompt}\n\nUser Question:\n{prompt}" if system_prompt else prompt
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": full_prompt}]
-                }
-            ],
-            "generationConfig": {
-                "temperature": self.temperature
-            }
-        }
-        try:
-            resp = requests.post(url, headers=headers, json=payload, timeout=45)
-            if resp.status_code == 200:
-                data = resp.json()
-                candidates = data.get("candidates", [])
-                if candidates and "content" in candidates[0]:
-                    parts = candidates[0]["content"].get("parts", [])
-                    if parts:
-                        return parts[0].get("text", "").strip()
-            return f"⚠️ Gemini API Error ({resp.status_code}): {resp.text}"
-        except Exception as e:
-            return f"⚠️ Error querying Gemini: {str(e)}"
-

@@ -30,6 +30,8 @@ export interface ChatMessage {
     retrieval_latency_ms?: number;
     generation_latency_ms?: number;
     chunks_retrieved?: number;
+    provider?: string;
+    model?: string;
   };
   timestamp?: string;
 }

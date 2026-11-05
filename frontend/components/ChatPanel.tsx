@@ -109,6 +109,12 @@ export default function ChatPanel({
                   <Copy className="w-3 h-3" />
                   <span>Copy</span>
                 </button>
+                {msg.metrics?.provider && (
+                  <span className="text-[10px] text-[#525252]">
+                    via {msg.metrics.provider === "gemini" ? "Cloud Gemini" : "Local Ollama"}
+                    {msg.metrics.total_latency_ms ? ` (${(msg.metrics.total_latency_ms / 1000).toFixed(1)}s)` : ""}
+                  </span>
+                )}
               </div>
             </div>
           )

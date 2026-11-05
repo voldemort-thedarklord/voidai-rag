@@ -93,6 +93,7 @@ export async function uploadDocument(
 export async function sendChatMessage(
   query: string,
   selectedDocuments?: string[],
+  provider: string = "gemini",
   token?: string
 ): Promise<any> {
   const res = await fetch(`${API_BASE}/api/chat`, {
@@ -100,8 +101,7 @@ export async function sendChatMessage(
     headers: getHeaders(token),
     body: JSON.stringify({
       query,
-      provider: "ollama",
-      model: "llama3:latest",
+      provider,
       selected_documents: selectedDocuments,
     }),
   });
@@ -110,6 +110,26 @@ export async function sendChatMessage(
     throw new Error(errorData.detail || `Chat query failed: ${res.statusText}`);
   }
   return res.json();
+}
+
+export async function fetchSystemStatus(): Promise<{
+  gemini_configured: boolean;
+  default_provider: string;
+  default_model: string;
+  supported_providers: string[];
+}> {
+  try {
+    const res = await fetch(`${API_BASE}/api/system/status`);
+    if (res.ok) return res.json();
+  } catch (e) {
+    console.warn("Could not fetch system status:", e);
+  }
+  return {
+    gemini_configured: true,
+    default_provider: "gemini",
+    default_model: "gemini-flash-lite-latest",
+    supported_providers: ["gemini", "ollama"],
+  };
 }
 
 export async function fetchChatHistory(token?: string): Promise<{

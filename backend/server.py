@@ -34,6 +34,9 @@ if str(BASE_DIR) not in sys.path:
 from src.config import (
     DEFAULT_TOP_K,
     DEFAULT_OLLAMA_MODEL,
+    DEFAULT_GEMINI_MODEL,
+    DEFAULT_LLM_PROVIDER,
+    GEMINI_API_KEY,
     SAMPLE_POLICIES_DIR,
     UPLOADS_DIR,
     CHROMA_PERSIST_DIR
@@ -86,8 +89,8 @@ class SignInRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     query: str
-    provider: str = "ollama"
-    model: str = DEFAULT_OLLAMA_MODEL
+    provider: Optional[str] = None
+    model: Optional[str] = None
     top_k: int = DEFAULT_TOP_K
     selected_documents: Optional[List[str]] = None
 
@@ -407,11 +410,13 @@ async def chat_endpoint(
     """Protected: Runs query through RAG pipeline across all user documents."""
     try:
         user_id = current_user.get("user_id")
+        active_provider = (req.provider or DEFAULT_LLM_PROVIDER).lower()
+        active_model = req.model or (DEFAULT_GEMINI_MODEL if active_provider == "gemini" else DEFAULT_OLLAMA_MODEL)
 
         result = rag_pipeline.run(
             query=req.query,
-            provider=req.provider,
-            model=req.model,
+            provider=active_provider,
+            model=active_model,
             top_k=req.top_k,
             selected_documents=req.selected_documents
         )
@@ -429,6 +434,17 @@ async def chat_endpoint(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/system/status")
+async def system_status():
+    """Returns engine availability for Gemini Cloud and Local Ollama."""
+    return {
+        "gemini_configured": bool(GEMINI_API_KEY),
+        "default_provider": DEFAULT_LLM_PROVIDER,
+        "default_model": DEFAULT_GEMINI_MODEL if DEFAULT_LLM_PROVIDER == "gemini" else DEFAULT_OLLAMA_MODEL,
+        "supported_providers": ["gemini", "ollama"]
+    }
 
 
 @app.get("/api/chat/history")

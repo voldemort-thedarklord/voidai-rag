@@ -28,6 +28,7 @@ export default function WorkspacePage() {
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [engine, setEngine] = useState<"gemini" | "ollama">("gemini");
 
   // Inspector state
   const [activeDocName, setActiveDocName] = useState("");
@@ -122,7 +123,7 @@ export default function WorkspacePage() {
 
     try {
       const token = await getToken();
-      const res = await sendChatMessage(query, selectedDocs, token || undefined);
+      const res = await sendChatMessage(query, selectedDocs, engine, token || undefined);
 
       const assistantMsg: ChatMessage = {
         id: `asst-${Date.now()}`,
@@ -240,7 +241,11 @@ export default function WorkspacePage() {
   return (
     <div className="min-h-screen bg-[#000000] text-[#E5E5E5] flex flex-col justify-between p-3 sm:p-5">
       {/* Header */}
-      <Header onOpenUpload={() => setIsUploadOpen(true)} />
+      <Header
+        onOpenUpload={() => setIsUploadOpen(true)}
+        engine={engine}
+        onEngineChange={setEngine}
+      />
 
       {/* Main 3-Panel Workspace Container */}
       <main className="w-full max-w-[1420px] mx-auto my-3 flex-1 flex flex-col justify-center">
