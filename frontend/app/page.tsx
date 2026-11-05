@@ -11,7 +11,7 @@ import {
   fetchDocuments,
   fetchDocumentPage,
   deleteDocument,
-  uploadDocument,
+  uploadDocuments,
   sendChatMessage,
   fetchChatHistory,
 } from "@/lib/api";
@@ -150,9 +150,9 @@ export default function WorkspacePage() {
     }
   };
 
-  const handleUpload = async (file: File) => {
+  const handleUpload = async (files: File[]) => {
     const token = await getToken();
-    await uploadDocument(file, token || undefined);
+    await uploadDocuments(files, token || undefined);
     await loadDocuments();
   };
 

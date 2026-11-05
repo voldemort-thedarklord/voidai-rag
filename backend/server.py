@@ -296,62 +296,99 @@ async def get_documents(current_user: Dict[str, Any] = Depends(get_current_user)
 
 
 @app.post("/api/upload")
-async def upload_document(
-    file: UploadFile = File(...),
+async def upload_documents(
+    files: Optional[List[UploadFile]] = File(default=None),
+    file: Optional[List[UploadFile]] = File(default=None),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """
-    Protected: Uploads file to Supabase Storage, chunks in ChromaDB,
-    and records ownership to authenticated user in Supabase DB.
+    Protected: Uploads one or multiple files to Supabase Storage,
+    chunks in ChromaDB (with OCR support), and records metadata to authenticated user in Supabase DB.
     """
-    try:
-        file_bytes = await file.read()
-        filename = file.filename
-        mime_type = file.content_type or "application/octet-stream"
+    all_files: List[UploadFile] = []
+    if files:
+        all_files.extend(files)
+    if file:
+        all_files.extend(file)
 
-        # 1. Upload to Supabase Storage
-        storage_path = filename
-        if supabase_manager.is_configured():
-            try:
-                storage_path = supabase_manager.upload_file_to_storage(filename, file_bytes, mime_type=mime_type)
-            except Exception as se:
-                print(f"[Upload] Supabase Storage warning: {se}")
+    # Filter out empty entries
+    all_files = [f for f in all_files if f and f.filename]
+    if not all_files:
+        raise HTTPException(status_code=400, detail="No files provided for upload.")
 
-        # 2. Save locally for document processing
-        save_path = UPLOADS_DIR / filename
-        with open(save_path, "wb") as f:
-            f.write(file_bytes)
+    results = []
+    errors = []
+    user_id = current_user.get("user_id")
 
-        # 3. Process into chunks & index in Vector Store (with OCR support)
-        chunks = doc_processor.process_file(save_path)
-        count = vector_store.add_chunks(chunks)
+    for f_item in all_files:
+        try:
+            file_bytes = await f_item.read()
+            filename = f_item.filename
+            mime_type = f_item.content_type or "application/octet-stream"
 
-        # 4. Get page count
-        page_info = doc_processor.get_document_page_text(save_path, 1)
-        total_pages = page_info.get("total_pages", 1)
+            # 1. Upload to Supabase Storage
+            storage_path = filename
+            if supabase_manager.is_configured():
+                try:
+                    storage_path = supabase_manager.upload_file_to_storage(
+                        filename, file_bytes, mime_type=mime_type
+                    )
+                except Exception as se:
+                    print(f"[Upload] Supabase Storage warning for {filename}: {se}")
 
-        # 5. Record metadata in Supabase PostgreSQL
-        user_id = current_user.get("user_id")
-        if supabase_manager.is_configured():
-            supabase_manager.record_document_in_db(
-                filename=filename,
-                storage_path=storage_path,
-                file_size=len(file_bytes),
-                mime_type=mime_type,
-                chunk_count=len(chunks),
-                page_count=total_pages,
-                uploaded_by=user_id
-            )
+            # 2. Save locally for document processing
+            save_path = UPLOADS_DIR / filename
+            with open(save_path, "wb") as f_out:
+                f_out.write(file_bytes)
 
-        return {
-            "success": True,
-            "filename": filename,
-            "chunks_added": count,
-            "total_pages": total_pages,
-            "storage_path": storage_path
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+            # 3. Process into chunks & index in Vector Store (with OCR support)
+            chunks = doc_processor.process_file(save_path)
+            count = vector_store.add_chunks(chunks)
+
+            # 4. Get page count
+            page_info = doc_processor.get_document_page_text(save_path, 1)
+            total_pages = page_info.get("total_pages", 1)
+
+            # 5. Record metadata in Supabase PostgreSQL
+            if supabase_manager.is_configured():
+                supabase_manager.record_document_in_db(
+                    filename=filename,
+                    storage_path=storage_path,
+                    file_size=len(file_bytes),
+                    mime_type=mime_type,
+                    chunk_count=len(chunks),
+                    page_count=total_pages,
+                    uploaded_by=user_id
+                )
+
+            results.append({
+                "filename": filename,
+                "chunks_added": count,
+                "total_pages": total_pages,
+                "storage_path": storage_path,
+                "status": "success"
+            })
+        except Exception as e:
+            print(f"[Upload] Error processing {f_item.filename}: {e}")
+            errors.append({"filename": f_item.filename, "error": str(e)})
+
+    if not results and errors:
+        error_details = "; ".join(f"{e['filename']}: {e['error']}" for e in errors)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Upload failed: {error_details}"
+        )
+
+    return {
+        "success": True,
+        "message": f"Successfully processed {len(results)} document(s)" + (f" ({len(errors)} failed)" if errors else ""),
+        "files": results,
+        "errors": errors if errors else None,
+        "filename": results[0]["filename"] if results else "",
+        "chunks_added": sum(r["chunks_added"] for r in results),
+        "total_pages": sum(r["total_pages"] for r in results),
+        "storage_path": results[0]["storage_path"] if results else ""
+    }
 
 
 @app.get("/api/document/{filename}/page/{page_num}")

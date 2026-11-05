@@ -67,12 +67,26 @@ export async function deleteDocument(
   return res.json();
 }
 
-export async function uploadDocument(
-  file: File,
+export async function uploadDocuments(
+  files: File[],
   token?: string
-): Promise<any> {
+): Promise<{
+  success: boolean;
+  message: string;
+  files: Array<{
+    filename: string;
+    chunks_added: number;
+    total_pages: number;
+    storage_path: string;
+    status: string;
+  }>;
+  chunks_added: number;
+  total_pages: number;
+}> {
   const formData = new FormData();
-  formData.append("file", file);
+  for (const file of files) {
+    formData.append("files", file);
+  }
 
   const headers: HeadersInit = {};
   if (token) {
@@ -89,6 +103,13 @@ export async function uploadDocument(
     throw new Error(errorData.detail || `Upload failed: ${res.statusText}`);
   }
   return res.json();
+}
+
+export async function uploadDocument(
+  file: File,
+  token?: string
+): Promise<any> {
+  return uploadDocuments([file], token);
 }
 
 export async function sendChatMessage(
