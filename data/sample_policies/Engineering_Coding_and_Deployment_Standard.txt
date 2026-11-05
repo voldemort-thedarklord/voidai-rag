@@ -23,3 +23,4 @@ CLASSIFICATION: Internal Restricted (Engineering Department)
 4.1 P0 (Critical Outage): User-facing customer outage affecting >10% of traffic. Response SLA is 15 minutes. War room initiated on Zoom bridge.
 4.2 P1 (Major Degraded Service): Core functionality impaired with partial workaround. Response SLA is 1 hour.
 4.3 P2 / P3 (Minor defect or internal tool issue): Response SLA is 24 to 72 business hours.
+

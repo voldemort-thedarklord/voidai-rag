@@ -172,6 +172,47 @@ class DocumentProcessor:
 
         return refined_chunks
 
+    def get_document_page_text(self, file_path: Path, page_num: int = 1) -> Dict[str, Any]:
+        """
+        Retrieves text for a specific page of a document for the Document Viewer.
+        Returns total_pages and page_text.
+        """
+        suffix = file_path.suffix.lower()
+        if suffix == ".pdf":
+            doc = pymupdf.open(file_path)
+            total = len(doc)
+            target_page = max(1, min(page_num, total))
+            page_text = doc[target_page - 1].get_text("text")
+            doc.close()
+            return {"total_pages": total, "page_num": target_page, "text": page_text}
+
+        # For text or docx, load full text and paginate roughly 1200 chars per page
+        if suffix in [".docx", ".doc"]:
+            pages = self.extract_text_from_docx(file_path)
+        else:
+            pages = self.extract_text_from_txt(file_path)
+
+        full_text = pages[0]["text"] if pages else ""
+        paragraphs = full_text.split("\n\n")
+        paginated = []
+        cur = []
+        cur_len = 0
+        for p in paragraphs:
+            if cur_len + len(p) > 1200:
+                paginated.append("\n\n".join(cur))
+                cur = [p]
+                cur_len = len(p)
+            else:
+                cur.append(p)
+                cur_len += len(p)
+        if cur:
+            paginated.append("\n\n".join(cur))
+
+        total = max(1, len(paginated))
+        target_page = max(1, min(page_num, total))
+        page_text = paginated[target_page - 1] if paginated else full_text
+        return {"total_pages": total, "page_num": target_page, "text": page_text}
+
     def process_file(
         self,
         file_path: Path,

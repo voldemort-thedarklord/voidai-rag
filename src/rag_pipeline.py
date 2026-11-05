@@ -173,3 +173,4 @@ class RAGPipeline:
         overlap = len(answer_words.intersection(context_words)) / len(answer_words)
         score = (overlap * 0.7) + (0.3 if has_citations else 0.0)
         return round(min(1.0, max(0.0, score)), 2)
+

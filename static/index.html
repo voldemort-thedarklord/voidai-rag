@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DenserAI — Enterprise Knowledge Base Assistant</title>
+  <!-- Tailwind CSS & Inter Font -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Merriweather', 'serif']
+          },
+          colors: {
+            brand: {
+              50: '#EFF6FF',
+              500: '#3B82F6',
+              600: '#2563EB',
+              700: '#1D4ED8'
+            },
+            dark: {
+              canvas: '#070A12',
+              card: '#0D1322',
+              sidebar: '#0A0F1D',
+              chat: '#080C18',
+              doc: '#12192A',
+              border: '#1E293B',
+              input: '#131C30'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.4);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #25334E;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3B82F6;
+    }
+    /* Citation highlight illumination */
+    .citation-highlight {
+      background: rgba(234, 179, 8, 0.22);
+      border-left: 3px solid #EAB308;
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: #FEF08A;
+      display: inline;
+      box-shadow: 0 0 14px rgba(234, 179, 8, 0.15);
+    }
+    .citation-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      background-color: #2563EB;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 9999px;
+      margin-left: 3px;
+      margin-right: 3px;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: all 0.2s;
+    }
+    .citation-badge:hover {
+      transform: scale(1.18);
+      background-color: #3B82F6;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
+    }
+  </style>
+</head>
+<body class="bg-[#070A12] text-slate-200 font-sans min-h-screen flex flex-col justify-between selection:bg-brand-600 selection:text-white">
+
+  <!-- TOP BRAND NAVBAR (Matches DenserAI header) -->
+  <header class="w-full max-w-7xl mx-auto px-6 pt-5 pb-3 flex items-center justify-between">
+    <!-- Logo -->
+    <div class="flex items-center space-x-2.5 cursor-pointer">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
+        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <span class="text-xl font-bold tracking-tight text-white flex items-center">
+        Denser<span class="text-blue-500">AI</span>
+      </span>
+    </div>
+
+    <!-- Navigation Menu Links -->
+    <nav class="hidden md:flex items-center space-x-7 text-sm font-medium text-slate-300">
+      <a href="#" class="hover:text-white flex items-center gap-1 transition">Products <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></a>
+      <a href="#" class="hover:text-white flex items-center gap-1 transition">Solutions <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></a>
+      <a href="#" class="hover:text-white flex items-center gap-1 transition">Features <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></a>
+      <a href="#" class="hover:text-white transition">Pricing</a>
+      <a href="#" class="hover:text-white flex items-center gap-1 transition">Resources <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></a>
+    </nav>
+
+    <!-- Auth / Actions -->
+    <div class="flex items-center space-x-4">
+      <a href="#" class="text-sm font-medium text-slate-300 hover:text-white transition">Sign in</a>
+      <button class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-full shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5">
+        Start for Free
+      </button>
+    </div>
+  </header>
+
+  <!-- PILL SWITCHER TABS -->
+  <div class="w-full flex justify-center py-2">
+    <div class="inline-flex p-1 bg-[#0F1628] rounded-full border border-slate-800 shadow-inner">
+      <button onclick="switchTab('website')" id="btn-tab-website" class="px-5 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200 rounded-full flex items-center gap-2 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        Website Chatbot
+      </button>
+      <button onclick="switchTab('knowledge')" id="btn-tab-knowledge" class="px-5 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-full shadow flex items-center gap-2 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        Knowledge Base Chatbot
+      </button>
+      <button onclick="switchTab('eval')" id="btn-tab-eval" class="px-5 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200 rounded-full flex items-center gap-2 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        Denser Retriever / Benchmark
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN MACOS BROWSER CONTAINER -->
+  <main class="w-full max-w-[1360px] mx-auto px-4 my-2 flex-1 flex flex-col justify-center">
+    <div class="w-full bg-[#0D1322] border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col h-[740px]">
+
+      <!-- WINDOW CHROME / TITLEBAR -->
+      <div class="h-10 bg-[#0A0F1D] border-b border-slate-800/80 px-4 flex items-center justify-between select-none">
+        <!-- Mac Dots -->
+        <div class="flex items-center space-x-2">
+          <div class="w-3 h-3 rounded-full bg-[#EF4444] hover:opacity-80 cursor-pointer shadow-sm"></div>
+          <div class="w-3 h-3 rounded-full bg-[#F59E0B] hover:opacity-80 cursor-pointer shadow-sm"></div>
+          <div class="w-3 h-3 rounded-full bg-[#10B981] hover:opacity-80 cursor-pointer shadow-sm"></div>
+        </div>
+
+        <!-- Address Bar Pill -->
+        <div class="flex items-center space-x-2 px-5 py-1 bg-[#131C30] border border-slate-700/60 rounded-md text-xs text-slate-400 w-64 justify-center shadow-inner">
+          <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span class="font-mono text-slate-300">denser.ai</span>
+        </div>
+
+        <!-- Right Window Controls -->
+        <div class="flex items-center space-x-3 text-slate-500">
+          <svg class="w-3.5 h-3.5 cursor-pointer hover:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+        </div>
+      </div>
+
+      <!-- THREE SPLIT COLUMNS -->
+      <div class="flex-1 flex overflow-hidden">
+
+        <!-- ============================================== -->
+        <!-- COLUMN 1: KNOWLEDGE BASE SIDEBAR (~22% width) -->
+        <!-- ============================================== -->
+        <aside class="w-72 bg-[#0A0F1D] border-r border-slate-800/80 flex flex-col justify-between shrink-0">
+          <!-- Top Section -->
+          <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Header -->
+            <div class="p-3.5 flex items-center justify-between border-b border-slate-800/60">
+              <span class="text-xs font-semibold text-slate-300 tracking-wide">Knowledge Base</span>
+              <div class="flex items-center space-x-2 text-slate-400">
+                <button onclick="toggleDocSearch()" title="Search Docs" class="p-1 hover:text-white rounded hover:bg-slate-800/50">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+                <button onclick="openUploadModal()" title="Upload Document" class="p-1 hover:text-white rounded hover:bg-slate-800/50 text-blue-400">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <button title="Layout" class="p-1 hover:text-white rounded hover:bg-slate-800/50">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Deselect / Action Bar -->
+            <div class="px-3.5 py-2 flex items-center justify-between text-xs text-slate-400 border-b border-slate-800/40">
+              <label class="flex items-center space-x-2 cursor-pointer select-none hover:text-slate-200">
+                <input type="checkbox" id="select-all-cb" checked onchange="toggleSelectAll(this)" class="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0 w-3.5 h-3.5">
+                <span class="text-[11px]">Deselect all</span>
+              </label>
+              <div class="flex items-center space-x-2">
+                <button onclick="fetchDocuments()" title="Refresh" class="hover:text-slate-200">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Scrollable Document List -->
+            <div id="doc-list-container" class="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+              <!-- Dynamically Populated -->
+              <div class="text-xs text-slate-500 p-3 text-center">Loading documents...</div>
+            </div>
+          </div>
+
+          <!-- Bottom Usage & Role Bar -->
+          <div class="p-3 border-t border-slate-800/80 bg-[#080D1A]/60 space-y-2.5">
+            <!-- RBAC Role Switcher -->
+            <div>
+              <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                <span>Active Role (RBAC)</span>
+                <span id="role-badge" class="px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 text-[10px]">Admin</span>
+              </div>
+              <select id="user-role-select" onchange="changeRole(this.value)" class="w-full bg-[#131C30] border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                <option value="Admin">Admin (All Access)</option>
+                <option value="Executive">Executive</option>
+                <option value="HR Manager">HR Manager</option>
+                <option value="Software Engineer">Software Engineer</option>
+                <option value="Finance Analyst">Finance Analyst</option>
+                <option value="General Employee">General Employee</option>
+              </select>
+            </div>
+
+            <!-- Usage Stats -->
+            <div class="text-[10px] text-slate-400 space-y-1 pt-1 border-t border-slate-800/40">
+              <div class="flex justify-between"><span>Storage:</span> <span id="stat-storage" class="text-slate-300">1.09 MB</span></div>
+              <div class="flex justify-between"><span>Indexed Chunks:</span> <span id="stat-chunks" class="text-slate-300">42</span></div>
+              <div class="flex justify-between"><span>Model:</span> <span id="stat-model" class="text-blue-400">llama3:latest</span></div>
+            </div>
+
+            <!-- Settings -->
+            <div class="pt-1 flex items-center justify-between text-xs text-slate-400 hover:text-slate-200 cursor-pointer" onclick="toggleSettingsModal()">
+              <div class="flex items-center space-x-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Settings</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- ============================================== -->
+        <!-- COLUMN 2: CHAT CONVERSATION PANE (~38% width) -->
+        <!-- ============================================== -->
+        <section class="flex-1 bg-[#080C17] flex flex-col justify-between overflow-hidden border-r border-slate-800/80">
+          
+          <!-- Message Feed -->
+          <div id="chat-messages-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+            
+            <!-- Default Assistant Greeting -->
+            <div class="flex items-start space-x-2.5 max-w-[85%]">
+              <div class="bg-[#141D30] border border-slate-800 text-slate-300 text-xs px-3.5 py-2.5 rounded-2xl rounded-tl-sm shadow-sm leading-relaxed">
+                Hello! How can I help you today?
+              </div>
+            </div>
+
+            <!-- Example User Question (Matches screenshot) -->
+            <div class="flex justify-end">
+              <div class="bg-blue-600 text-white text-xs px-4 py-2.5 rounded-2xl rounded-tr-sm shadow-md max-w-[82%] leading-relaxed">
+                how many paid vacation days do I have for the first year?
+              </div>
+            </div>
+
+            <!-- Example Assistant Answer with Citation (Matches screenshot) -->
+            <div class="flex flex-col space-y-1.5 max-w-[90%]">
+              <div class="bg-[#121A2C] border border-slate-800/80 text-slate-200 text-xs px-4 py-3 rounded-2xl rounded-tl-sm shadow-md leading-relaxed space-y-2">
+                <p>Based on the employee handbook, during your first year of employment, you will earn <strong class="text-white">10 days (2 weeks)</strong> of paid vacation.</p>
+                <p>However, there's an important detail: you will not earn any vacation benefits during the first 90 days of employment. The 10 days of vacation are earned during the remaining nine months of your first year <span class="citation-badge" onclick="showCitationDoc('HR_Leave_and_Attendance_Policy.pdf', 2, 'first 90 days of employment')">1</span>.</p>
+              </div>
+
+              <!-- Action Bar (Thumbs, Copy, Refresh) -->
+              <div class="flex items-center space-x-2 text-slate-500 text-xs pl-2 pt-0.5">
+                <button class="hover:text-slate-300">👍</button>
+                <button class="hover:text-slate-300">👎</button>
+                <button class="hover:text-slate-300">📋</button>
+                <button class="hover:text-slate-300">🔄</button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Chat Input Bar -->
+          <div class="p-3 bg-[#0A0F1D]/80 border-t border-slate-800/60">
+            <div class="relative flex items-center bg-[#131C30] border border-slate-700/70 rounded-full px-3.5 py-1.5 shadow-lg focus-within:border-blue-500 transition">
+              <input 
+                type="text" 
+                id="chat-input"
+                placeholder="Type your question here..." 
+                class="w-full bg-transparent text-xs text-white placeholder-slate-400 focus:outline-none pr-28"
+                onkeydown="if(event.key === 'Enter') handleSendMessage()"
+              >
+              
+              <div class="absolute right-2 flex items-center space-x-2">
+                <!-- Sources Filter Pill -->
+                <div class="flex items-center space-x-1 px-2 py-0.5 bg-[#1B263F] border border-slate-700/80 rounded-full text-[11px] text-slate-300 cursor-pointer hover:bg-slate-700/60 transition">
+                  <span id="active-sources-label">All sources</span>
+                  <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+
+                <!-- Send Button -->
+                <button 
+                  onclick="handleSendMessage()"
+                  id="btn-send"
+                  class="w-7 h-7 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition shadow-md shadow-blue-600/40"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ============================================== -->
+        <!-- COLUMN 3: DOCUMENT VIEWER PANE (~40% width)   -->
+        <!-- ============================================== -->
+        <aside id="doc-viewer-aside" class="w-[480px] bg-[#0A0E1A] flex flex-col justify-between overflow-hidden shrink-0">
+          
+          <!-- Document Viewer Header Toolbar -->
+          <div class="h-10 px-3 border-b border-slate-800/80 flex items-center justify-between text-xs text-slate-400 select-none bg-[#0B101E]">
+            <div class="flex items-center space-x-2">
+              <svg class="w-3.5 h-3.5 cursor-pointer hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+
+            <!-- Zoom Controls -->
+            <div class="flex items-center space-x-2 text-xs">
+              <button onclick="zoomDoc(-10)" class="hover:text-white text-sm px-1">-</button>
+              <span id="doc-zoom-label" class="font-mono text-slate-300 text-[11px]">92%</span>
+              <button onclick="zoomDoc(10)" class="hover:text-white text-sm px-1">+</button>
+            </div>
+
+            <!-- Page Navigation -->
+            <div class="flex items-center space-x-1.5 text-xs">
+              <button onclick="changeDocPage(-1)" class="p-1 hover:text-white rounded hover:bg-slate-800/50">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+              </button>
+              <input type="text" id="doc-current-page" value="2" class="w-7 h-5 bg-[#141C30] border border-slate-700 text-center text-[11px] text-white rounded focus:outline-none" onchange="jumpToPage(this.value)">
+              <span class="text-slate-500 text-[11px]">/ <span id="doc-total-pages">3</span></span>
+              <button onclick="changeDocPage(1)" class="p-1 hover:text-white rounded hover:bg-slate-800/50">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              </button>
+            </div>
+
+            <!-- Close / Expand -->
+            <div>
+              <button onclick="clearDocHighlight()" title="Close Viewer" class="hover:text-white">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Document Paper Sheet View (Dark Mode) -->
+          <div id="doc-paper-scroll" class="flex-1 overflow-y-auto p-4 flex justify-center bg-[#070B14]">
+            <div id="doc-paper" class="w-full max-w-[430px] bg-[#12192A] border border-slate-800/90 rounded-md p-6 shadow-2xl text-[12.5px] font-serif text-slate-300 leading-relaxed space-y-3.5 transition-transform duration-150 origin-top">
+              
+              <!-- Document Title -->
+              <div class="text-center pb-2 border-b border-slate-800 text-[11px] font-sans tracking-widest text-slate-500 uppercase">
+                <span id="doc-viewer-filename">HR_Leave_and_Attendance_Policy.pdf</span>
+              </div>
+
+              <!-- Page Body with Highlight -->
+              <div id="doc-viewer-content" class="space-y-3">
+                <p>
+                  <span class="citation-highlight">
+                    During the first 90 days of employment full- and part-time employees will not earn Vacation benefits. During the remaining nine months of first year employment, a full-time employee will earn two weeks (10 days) of paid Vacation.
+                  </span>
+                </p>
+                
+                <p class="text-slate-400">
+                  Full-time employees will continue to earn two weeks (10 days) of Vacation during the second year of employment. In their third year of employment, full-time employees will earn three weeks (15 days) of Vacation. During the fourth year and thereafter, full-time employees will earn four weeks (20 days) of Vacation per year. Temporary employees are ineligible for Vacation benefits.
+                </p>
+
+                <p class="text-slate-400">
+                  Vacation benefits are prorated accordingly for Part-Time employees. Use of Vacation is subject to approval by the supervisor and Executive Director and must be requested in hourly increments, using the appropriate leave request form.
+                </p>
+
+                <h4 class="font-sans font-semibold text-slate-200 text-xs pt-2">C. Sick Leave</h4>
+
+                <p class="text-slate-400">
+                  Sick leave benefits are earned on a prorated basis of one day (7 hours) per month for full-time employees beginning at first day of employment. Part-time employees receive prorated sick leave benefits.
+                </p>
+
+                <p class="text-slate-400">
+                  Unused sick leave can accumulate from year to year up to a maximum of 30 days (210 hours) for full-time employees. No sick leave benefits are paid upon separation of employment for any reason.
+                </p>
+              </div>
+
+              <!-- Page Footer -->
+              <div class="pt-4 text-center text-[10px] font-sans text-slate-500 border-t border-slate-800/60">
+                - Page <span id="doc-footer-page">2</span> -
+              </div>
+
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- BOTTOM CAPTION & FLOATING ASSISTANT PILL (Matches Screenshot) -->
+  <footer class="w-full max-w-7xl mx-auto px-6 py-3 flex items-center justify-between text-xs text-slate-400 select-none">
+    <div class="w-1/4"></div>
+    <div class="text-center text-slate-400">
+      Chat with PDF documents and your knowledge base — get cited answers instantly
+    </div>
+    
+    <!-- Floating Bottom-Right Assistant Pill -->
+    <div class="w-1/4 flex justify-end">
+      <div class="flex items-center space-x-2 bg-[#121A2C] border border-slate-700/80 px-3.5 py-1.5 rounded-full shadow-lg hover:border-blue-500 transition cursor-pointer">
+        <span>👋</span>
+        <span class="text-xs text-slate-300 font-medium">Hello, I am Denser assistant. How can I help?</span>
+        <div class="w-5 h-5 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-[10px] text-white font-bold">
+          D
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================== -->
+  <!-- MODAL 1: UPLOAD DOCUMENT                       -->
+  <!-- ============================================== -->
+  <div id="upload-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0D1424] border border-slate-800 rounded-xl p-5 w-full max-w-md shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+          Upload to Knowledge Base
+        </h3>
+        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Select File (PDF, DOCX, TXT)</label>
+          <input type="file" id="modal-file-input" class="w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 bg-[#131C30] border border-slate-700 rounded-md p-1.5 cursor-pointer">
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Department / RBAC Classification</label>
+          <select id="modal-dept-select" class="w-full bg-[#131C30] border border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-slate-200">
+            <option value="General">General (All Employees)</option>
+            <option value="HR">HR Department</option>
+            <option value="Engineering">Engineering</option>
+            <option value="Finance">Finance</option>
+            <option value="Executive">Executive (Confidential)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+        <button onclick="closeUploadModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancel</button>
+        <button onclick="submitUpload()" id="btn-submit-upload" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-md shadow-md">
+          Ingest & Index
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL 2: BENCHMARK EVALUATION MODAL            -->
+  <!-- ============================================== -->
+  <div id="eval-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0D1424] border border-slate-800 rounded-xl p-6 w-full max-w-2xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          RAG Benchmark & Viva Evaluation Suite
+        </h3>
+        <button onclick="closeEvalModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="space-y-3 overflow-y-auto flex-1 pr-1">
+        <p class="text-xs text-slate-400">Automated benchmark testing across Factual QA, RBAC permission filters, and Hallucination rejection.</p>
+        
+        <div id="eval-scorecard" class="grid grid-cols-4 gap-2 pt-1">
+          <div class="bg-[#131C30] p-3 rounded border border-slate-800 text-center">
+            <span class="text-[10px] text-slate-400 block">Accuracy</span>
+            <span id="score-accuracy" class="text-base font-bold text-emerald-400">100%</span>
+          </div>
+          <div class="bg-[#131C30] p-3 rounded border border-slate-800 text-center">
+            <span class="text-[10px] text-slate-400 block">Tests Passed</span>
+            <span id="score-passed" class="text-base font-bold text-white">8 / 8</span>
+          </div>
+          <div class="bg-[#131C30] p-3 rounded border border-slate-800 text-center">
+            <span class="text-[10px] text-slate-400 block">Avg Retrieval</span>
+            <span id="score-retrieval" class="text-base font-bold text-blue-400">142 ms</span>
+          </div>
+          <div class="bg-[#131C30] p-3 rounded border border-slate-800 text-center">
+            <span class="text-[10px] text-slate-400 block">RBAC Security</span>
+            <span id="score-rbac" class="text-base font-bold text-emerald-400">100%</span>
+          </div>
+        </div>
+
+        <div id="eval-table-container" class="border border-slate-800 rounded overflow-hidden text-xs">
+          <!-- Table filled dynamically -->
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center pt-2 border-t border-slate-800">
+        <span id="eval-status-msg" class="text-xs text-slate-400">Ready to run benchmark</span>
+        <button onclick="runBenchmark()" id="btn-run-benchmark" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-md shadow-md">
+          ▶️ Execute Live Benchmark
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    let currentZoom = 92;
+    let activeDocName = 'HR_Leave_and_Attendance_Policy.pdf';
+    let activePage = 2;
+    let totalPages = 3;
+    let currentRole = 'Admin';
+    let availableDocs = [];
+
+    // On Load
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchDocuments();
+    });
+
+    // Fetch and render document list
+    async function fetchDocuments() {
+      try {
+        const res = await fetch('/api/documents');
+        const data = await res.json();
+        availableDocs = data.documents || [];
+        
+        document.getElementById('stat-chunks').innerText = data.total_chunks || 42;
+        document.getElementById('stat-storage').innerText = (data.storage_mb || 1.09) + ' MB';
+
+        renderDocList();
+      } catch (e) {
+        console.error('Error fetching documents:', e);
+      }
+    }
+
+    function renderDocList() {
+      const container = document.getElementById('doc-list-container');
+      if (!availableDocs.length) {
+        container.innerHTML = '<div class="text-xs text-slate-500 p-3 text-center">No documents indexed.</div>';
+        return;
+      }
+
+      container.innerHTML = availableDocs.map((doc, idx) => {
+        const isPdf = doc.source.endsWith('.pdf');
+        const isDocx = doc.source.endsWith('.docx');
+        const iconColor = isPdf ? 'text-red-400' : (isDocx ? 'text-blue-400' : 'text-slate-400');
+        const iconSvg = isPdf 
+          ? `<svg class="w-3.5 h-3.5 ${iconColor} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`
+          : `<svg class="w-3.5 h-3.5 ${iconColor} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+
+        const deptBadge = doc.department !== 'General' 
+          ? `<span class="text-[9px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">${doc.department}</span>` 
+          : '';
+
+        return `
+          <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-[#131C30] cursor-pointer group transition select-none" onclick="loadDocInViewer('${doc.source}', 1)">
+            <label class="flex items-center space-x-2 truncate cursor-pointer" onclick="event.stopPropagation()">
+              <input type="checkbox" checked class="doc-cb rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0 w-3.5 h-3.5">
+              ${iconSvg}
+              <span class="text-xs text-slate-300 truncate max-w-[140px] group-hover:text-white" title="${doc.source}">${doc.source}</span>
+            </label>
+            <div class="flex items-center space-x-1 shrink-0">
+              ${deptBadge}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Role switcher
+    function changeRole(role) {
+      currentRole = role;
+      document.getElementById('role-badge').innerText = role;
+    }
+
+    // Toggle Select All Checkbox
+    function toggleSelectAll(masterCb) {
+      document.querySelectorAll('.doc-cb').forEach(cb => cb.checked = masterCb.checked);
+      document.getElementById('active-sources-label').innerText = masterCb.checked ? 'All sources' : 'None';
+    }
+
+    // Load Document into Right Viewer
+    async function loadDocInViewer(filename, page = 1, highlightPhrase = '') {
+      activeDocName = filename;
+      activePage = page;
+      document.getElementById('doc-viewer-filename').innerText = filename;
+      document.getElementById('doc-current-page').value = page;
+      document.getElementById('doc-footer-page').innerText = page;
+
+      try {
+        const res = await fetch(`/api/document/${encodeURIComponent(filename)}/page/${page}`);
+        if (!res.ok) throw new Error('Page not found');
+        const data = await res.json();
+        
+        totalPages = data.total_pages || 1;
+        document.getElementById('doc-total-pages').innerText = totalPages;
+
+        let contentHtml = '';
+        const paragraphs = data.text.split('\n\n');
+
+        contentHtml = paragraphs.map(para => {
+          let cleanPara = escapeHtml(para.trim());
+          if (highlightPhrase && cleanPara.toLowerCase().includes(highlightPhrase.toLowerCase())) {
+            // Highlight matching sentence
+            const regex = new RegExp(`(${escapeRegex(highlightPhrase)})`, 'gi');
+            cleanPara = cleanPara.replace(regex, '<span class="citation-highlight">$1</span>');
+          }
+          return `<p class="text-slate-300 leading-relaxed">${cleanPara}</p>`;
+        }).join('');
+
+        document.getElementById('doc-viewer-content').innerHTML = contentHtml || '<p class="text-slate-500">Empty page content</p>';
+      } catch (e) {
+        console.error('Error loading doc page:', e);
+      }
+    }
+
+    // Show Citation when user clicks citation badge [1], [2]
+    function showCitationDoc(filename, page, phrase) {
+      loadDocInViewer(filename, page, phrase);
+      // Subtle pulse on document paper
+      const paper = document.getElementById('doc-paper');
+      paper.classList.add('ring-2', 'ring-yellow-500/50');
+      setTimeout(() => paper.classList.remove('ring-2', 'ring-yellow-500/50'), 1500);
+    }
+
+    // Zoom doc
+    function zoomDoc(delta) {
+      currentZoom = Math.max(70, Math.min(140, currentZoom + delta));
+      document.getElementById('doc-zoom-label').innerText = currentZoom + '%';
+      document.getElementById('doc-paper').style.transform = `scale(${currentZoom / 100})`;
+    }
+
+    // Change Doc Page
+    function changeDocPage(delta) {
+      const newPage = activePage + delta;
+      if (newPage >= 1 && newPage <= totalPages) {
+        loadDocInViewer(activeDocName, newPage);
+      }
+    }
+
+    function jumpToPage(val) {
+      const p = parseInt(val);
+      if (p >= 1 && p <= totalPages) {
+        loadDocInViewer(activeDocName, p);
+      }
+    }
+
+    function clearDocHighlight() {
+      loadDocInViewer(activeDocName, activePage);
+    }
+
+    // Handle Chat Question
+    async function handleSendMessage() {
+      const input = document.getElementById('chat-input');
+      const query = input.value.trim();
+      if (!query) return;
+
+      const container = document.getElementById('chat-messages-container');
+
+      // Append User Bubble
+      const userBubble = document.createElement('div');
+      userBubble.className = 'flex justify-end';
+      userBubble.innerHTML = `
+        <div class="bg-blue-600 text-white text-xs px-4 py-2.5 rounded-2xl rounded-tr-sm shadow-md max-w-[82%] leading-relaxed">
+          ${escapeHtml(query)}
+        </div>
+      `;
+      container.appendChild(userBubble);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+
+      // Append Loading Assistant Bubble
+      const loadingBubble = document.createElement('div');
+      loadingBubble.className = 'flex items-start space-x-2 max-w-[90%]';
+      loadingBubble.id = 'loading-assistant-bubble';
+      loadingBubble.innerHTML = `
+        <div class="bg-[#121A2C] border border-slate-800/80 text-slate-300 text-xs px-4 py-3 rounded-2xl rounded-tl-sm shadow-md flex items-center space-x-2">
+          <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+          <div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse delay-75"></div>
+          <div class="w-2 h-2 rounded-full bg-blue-300 animate-pulse delay-150"></div>
+          <span class="text-[11px] text-slate-400 pl-1">Searching documents & synthesizing answer...</span>
+        </div>
+      `;
+      container.appendChild(loadingBubble);
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            query: query,
+            user_role: currentRole,
+            provider: 'ollama',
+            model: 'llama3:latest'
+          })
+        });
+
+        const data = await res.json();
+        loadingBubble.remove();
+
+        // Process answer with citation badges
+        let answerText = data.answer || 'No response generated.';
+        const citations = data.citations || [];
+
+        // Build HTML with interactive badges
+        let citationBadgesHtml = '';
+        if (citations.length > 0) {
+          citationBadgesHtml = citations.map((c, i) => {
+            const snippetPhrase = (c.excerpt_snippet || '').slice(0, 35);
+            return `<span class="citation-badge" onclick="showCitationDoc('${c.source}', ${c.page}, '${escapeHtml(snippetPhrase)}')">${i + 1}</span>`;
+          }).join(' ');
+        }
+
+        const assistantBubble = document.createElement('div');
+        assistantBubble.className = 'flex flex-col space-y-1.5 max-w-[90%]';
+        assistantBubble.innerHTML = `
+          <div class="bg-[#121A2C] border border-slate-800/80 text-slate-200 text-xs px-4 py-3 rounded-2xl rounded-tl-sm shadow-md leading-relaxed space-y-2">
+            <div>${formatMarkdown(answerText)} ${citationBadgesHtml}</div>
+            ${data.metrics ? `<div class="text-[10px] text-slate-500 pt-1 border-t border-slate-800/60 flex items-center justify-between">
+              <span>Latency: ${data.metrics.total_latency_ms} ms</span>
+              <span>Role: ${data.metrics.user_role}</span>
+            </div>` : ''}
+          </div>
+          <div class="flex items-center space-x-2 text-slate-500 text-xs pl-2 pt-0.5">
+            <button class="hover:text-slate-300" onclick="alert('Feedback recorded!')">👍</button>
+            <button class="hover:text-slate-300" onclick="alert('Feedback recorded!')">👎</button>
+            <button class="hover:text-slate-300" onclick="navigator.clipboard.writeText('${escapeHtml(answerText)}'); alert('Copied to clipboard!')">📋</button>
+          </div>
+        `;
+        container.appendChild(assistantBubble);
+        container.scrollTop = container.scrollHeight;
+
+        // If citations exist, immediately display the first citation in the document viewer!
+        if (citations.length > 0) {
+          const firstCite = citations[0];
+          const phrase = (firstCite.excerpt_snippet || '').slice(0, 30);
+          showCitationDoc(firstCite.source, firstCite.page, phrase);
+        }
+
+      } catch (err) {
+        loadingBubble.remove();
+        console.error('Chat error:', err);
+        const errBubble = document.createElement('div');
+        errBubble.className = 'text-xs text-red-400 p-2 bg-red-950/30 rounded border border-red-800/50';
+        errBubble.innerText = 'Error communicating with assistant: ' + err.message;
+        container.appendChild(errBubble);
+      }
+    }
+
+    // Modal Handlers
+    function openUploadModal() {
+      document.getElementById('upload-modal').classList.remove('hidden');
+    }
+    function closeUploadModal() {
+      document.getElementById('upload-modal').classList.add('hidden');
+    }
+
+    async function submitUpload() {
+      const fileInput = document.getElementById('modal-file-input');
+      const dept = document.getElementById('modal-dept-select').value;
+      if (!fileInput.files.length) {
+        alert('Please select a file to upload.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-submit-upload');
+      btn.innerText = 'Ingesting...';
+      btn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('department', dept);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        alert(`Successfully ingested ${data.filename} (${data.chunks_added} chunks added under ${data.department})!`);
+        closeUploadModal();
+        fetchDocuments();
+      } catch (e) {
+        alert('Upload failed: ' + e.message);
+      } finally {
+        btn.innerText = 'Ingest & Index';
+        btn.disabled = false;
+      }
+    }
+
+    // Benchmark Modal
+    function switchTab(tab) {
+      if (tab === 'eval') {
+        document.getElementById('eval-modal').classList.remove('hidden');
+      } else if (tab === 'website') {
+        alert('Website Chatbot crawler integration tab. Currently displaying Knowledge Base Chatbot.');
+      }
+    }
+    function closeEvalModal() {
+      document.getElementById('eval-modal').classList.add('hidden');
+    }
+
+    async function runBenchmark() {
+      const btn = document.getElementById('btn-run-benchmark');
+      const status = document.getElementById('eval-status-msg');
+      btn.innerText = 'Running tests...';
+      btn.disabled = true;
+      status.innerText = 'Evaluating test queries across RBAC and Hallucination benchmarks...';
+
+      try {
+        const res = await fetch('/api/eval');
+        const data = await res.json();
+        const sc = data.scorecard;
+
+        document.getElementById('score-accuracy').innerText = sc['Overall Accuracy'];
+        document.getElementById('score-passed').innerText = `${sc['Tests Passed']} / ${sc['Total Test Cases']}`;
+        document.getElementById('score-retrieval').innerText = sc['Avg Retrieval Latency'];
+        document.getElementById('score-rbac').innerText = sc['RBAC Access Security'];
+
+        const tableHtml = `
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-[#151E32] text-slate-300">
+              <tr>
+                <th class="p-2 border-b border-slate-700">Test ID</th>
+                <th class="p-2 border-b border-slate-700">Category</th>
+                <th class="p-2 border-b border-slate-700">Role</th>
+                <th class="p-2 border-b border-slate-700">Status</th>
+                <th class="p-2 border-b border-slate-700">Retrieval</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              ${data.results.map(r => `
+                <tr class="hover:bg-[#12192A]">
+                  <td class="p-2 font-mono text-blue-400">${r['Test ID']}</td>
+                  <td class="p-2 text-slate-300">${r['Category']}</td>
+                  <td class="p-2 text-slate-400">${r['Role Used']}</td>
+                  <td class="p-2 font-semibold ${r['Status'] === 'PASS' ? 'text-emerald-400' : 'text-red-400'}">${r['Status']}</td>
+                  <td class="p-2">${r['Retrieval Hit']}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        document.getElementById('eval-table-container').innerHTML = tableHtml;
+        status.innerText = 'Benchmark complete! All test cases executed successfully.';
+      } catch (e) {
+        status.innerText = 'Error running benchmark: ' + e.message;
+      } finally {
+        btn.innerText = '▶️ Execute Live Benchmark';
+        btn.disabled = false;
+      }
+    }
+
+    function toggleSettingsModal() {
+      alert('Enterprise Settings:\n- Vector Store: ChromaDB (HNSW Cosine)\n- Embedding Model: all-MiniLM-L6-v2 (384-dim ONNX)\n- LLM Engine: Local Ollama (llama3:latest)\n- Server: FastAPI / Uvicorn');
+    }
+
+    function toggleDocSearch() {
+      const q = prompt('Filter knowledge base documents:');
+      if (q !== null) {
+        const items = document.querySelectorAll('#doc-list-container > div');
+        items.forEach(el => {
+          if (el.innerText.toLowerCase().includes(q.toLowerCase())) {
+            el.style.display = 'flex';
+          } else {
+            el.style.display = 'none';
+          }
+        });
+      }
+    }
+
+    // Simple markdown formatting helper
+    function formatMarkdown(text) {
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function escapeHtml(text) {
+      const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function escapeRegex(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+  </script>
+</body>
+</html>

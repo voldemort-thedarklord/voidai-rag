@@ -208,3 +208,4 @@ class RAGEvaluator:
             "details_df": df_results,
             "raw_results": results
         }
+

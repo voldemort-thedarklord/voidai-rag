@@ -182,3 +182,4 @@ class LLMClient:
             return f"⚠️ Gemini API Error ({resp.status_code}): {resp.text}"
         except Exception as e:
             return f"⚠️ Error querying Gemini: {str(e)}"
+

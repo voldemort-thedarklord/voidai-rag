@@ -22,3 +22,4 @@ CLASSIFICATION: Internal Restricted
 4. REMOTE CONNECTIVITY AND VPN
 4.1 Public Wi-Fi networks (cafes, airports, hotels) must only be accessed through the Acme WireGuard Zero-Trust Network Access (ZTNA) tunnel.
 4.2 Split tunneling is disabled on all remote VPN profiles to enforce full security inspection.
+

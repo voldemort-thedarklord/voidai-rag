@@ -180,3 +180,4 @@ Passages outside the employee's authorization are filtered out in vector space b
 
 ## 📜 License
 Developed for educational, research, and portfolio demonstration purposes. Distributed under the MIT License.
+
