@@ -11,6 +11,7 @@ import {
   fetchDocuments,
   fetchDocumentPage,
   deleteDocument,
+  uploadDocument,
   uploadDocuments,
   sendChatMessage,
   fetchChatHistory,
@@ -150,9 +151,9 @@ export default function WorkspacePage() {
     }
   };
 
-  const handleUpload = async (files: File[]) => {
+  const handleUploadSingle = async (file: File) => {
     const token = await getToken();
-    await uploadDocuments(files, token || undefined);
+    await uploadDocument(file, token || undefined);
     await loadDocuments();
   };
 
@@ -286,7 +287,7 @@ export default function WorkspacePage() {
       <IngestModal
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
-        onUpload={handleUpload}
+        onUploadSingle={handleUploadSingle}
       />
     </div>
   );

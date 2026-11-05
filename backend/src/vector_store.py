@@ -47,21 +47,23 @@ class VectorStoreManager:
     def add_chunks(self, chunks: List[DocumentChunk]) -> int:
         """
         Upsert processed chunks into ChromaDB collection.
+        Batched in groups of 32 to prevent memory spikes in ONNX embedding model.
         Returns count of upserted chunks.
         """
         if not chunks:
             return 0
 
-        ids = [chunk.chunk_id for chunk in chunks]
-        documents = [chunk.text for chunk in chunks]
-        metadatas = [chunk.to_dict()["metadata"] for chunk in chunks]
-
-        # ChromaDB upsert handles updates/duplicates automatically
-        self.collection.upsert(
-            ids=ids,
-            documents=documents,
-            metadatas=metadatas
-        )
+        batch_size = 32
+        for i in range(0, len(chunks), batch_size):
+            batch = chunks[i:i + batch_size]
+            b_ids = [c.chunk_id for c in batch]
+            b_docs = [c.text for c in batch]
+            b_meta = [c.to_dict()["metadata"] for c in batch]
+            self.collection.upsert(
+                ids=b_ids,
+                documents=b_docs,
+                metadatas=b_meta
+            )
         return len(chunks)
 
     def search(

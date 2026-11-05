@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { X, Upload, FileText, Trash2, Plus, Loader2 } from "lucide-react";
+import { X, Upload, FileText, Plus, Loader2 } from "lucide-react";
 
 interface IngestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (files: File[]) => Promise<void>;
+  onUploadSingle: (file: File) => Promise<void>;
 }
 
 function formatBytes(bytes: number): string {
@@ -27,10 +27,11 @@ function isAllowedFile(file: File): boolean {
 export default function IngestModal({
   isOpen,
   onClose,
-  onUpload,
+  onUploadSingle,
 }: IngestModalProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [progressStatus, setProgressStatus] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -92,17 +93,35 @@ export default function IngestModal({
     if (selectedFiles.length === 0 || uploading) return;
 
     setUploading(true);
-    try {
-      await onUpload(selectedFiles);
-      setSelectedFiles([]);
+    const queue = [...selectedFiles];
+    const errors: string[] = [];
+    let completedCount = 0;
+
+    for (let i = 0; i < queue.length; i++) {
+      const file = queue[i];
+      setProgressStatus(`Uploading ${file.name} (${i + 1}/${queue.length})...`);
+      try {
+        await onUploadSingle(file);
+        completedCount++;
+        // Remove uploaded file from list so user sees real-time progress
+        setSelectedFiles((prev) => prev.filter((f) => f.name !== file.name));
+      } catch (err: any) {
+        errors.push(`${file.name}: ${err.message}`);
+      }
+    }
+
+    setUploading(false);
+    setProgressStatus("");
+
+    if (errors.length > 0) {
+      alert(`Some files failed to upload:\n\n${errors.join("\n")}`);
+    }
+
+    if (completedCount > 0 && errors.length === 0) {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
       onClose();
-    } catch (err: any) {
-      alert("Upload failed: " + err.message);
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -223,6 +242,14 @@ export default function IngestModal({
             </div>
           )}
 
+          {/* Progress status banner when uploading */}
+          {uploading && progressStatus && (
+            <div className="flex items-center space-x-2 px-3 py-2 bg-[#141414] border border-[#2A2A2A] rounded text-[11px] text-white font-mono">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-white shrink-0" />
+              <span className="truncate">{progressStatus}</span>
+            </div>
+          )}
+
           {/* Footer actions */}
           <div className="flex items-center justify-between pt-3 border-t border-[#222222]">
             <button
@@ -252,7 +279,7 @@ export default function IngestModal({
                 {uploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>
                   {uploading
-                    ? `Uploading ${selectedFiles.length} file${selectedFiles.length > 1 ? "s" : ""}...`
+                    ? "Uploading..."
                     : selectedFiles.length > 1
                     ? `Upload ${selectedFiles.length} Documents`
                     : "Upload Document"}

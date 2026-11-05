@@ -323,7 +323,7 @@ async def upload_documents(
     for f_item in all_files:
         try:
             file_bytes = await f_item.read()
-            filename = f_item.filename
+            filename = Path(f_item.filename).name
             mime_type = f_item.content_type or "application/octet-stream"
 
             # 1. Upload to Supabase Storage

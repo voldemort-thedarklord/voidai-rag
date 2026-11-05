@@ -12,12 +12,21 @@ import pymupdf
 import docx
 from PIL import Image
 
-try:
-    from rapidocr_onnxruntime import RapidOCR
-    _ocr_engine = RapidOCR()
-except Exception as e:
-    print(f"[DocumentProcessor] RapidOCR not available: {e}")
-    _ocr_engine = None
+_ocr_engine = None
+_ocr_initialized = False
+
+def get_ocr_engine():
+    global _ocr_engine, _ocr_initialized
+    if not _ocr_initialized:
+        _ocr_initialized = True
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+            _ocr_engine = RapidOCR()
+            print("[DocumentProcessor] RapidOCR engine loaded successfully.")
+        except Exception as e:
+            print(f"[DocumentProcessor] RapidOCR not available: {e}")
+            _ocr_engine = None
+    return _ocr_engine
 
 from src.config import DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP
 
@@ -74,13 +83,14 @@ class DocumentProcessor:
         return hasher.hexdigest()[:12]
 
     def _ocr_page(self, page: pymupdf.Page) -> str:
-        """Runs RapidOCR on a rendered PyMuPDF page pixmap."""
-        if not _ocr_engine:
+        """Runs RapidOCR on a rendered PyMuPDF page pixmap (optimized at 100 DPI)."""
+        engine = get_ocr_engine()
+        if not engine:
             return ""
         try:
-            pix = page.get_pixmap(dpi=150)
+            pix = page.get_pixmap(dpi=100)
             img = Image.open(io.BytesIO(pix.tobytes("png")))
-            result, _ = _ocr_engine(img)
+            result, _ = engine(img)
             if result:
                 lines = [line[1] for line in result if line and len(line) > 1]
                 return "\n".join(lines).strip()
@@ -92,14 +102,17 @@ class DocumentProcessor:
         """Extract text page-by-page from PDF using PyMuPDF with OCR fallback for scans."""
         pages_content = []
         doc = pymupdf.open(file_path)
+        scanned_pages_processed = 0
+        max_scanned_pages = 5
         try:
             for page_idx, page in enumerate(doc, start=1):
                 text = page.get_text("text").strip()
-                # If page contains little to no selectable text, attempt OCR
-                if len(text) < 20:
+                # If page contains little to no selectable text, attempt OCR (capped to prevent timeouts)
+                if len(text) < 20 and scanned_pages_processed < max_scanned_pages:
                     ocr_text = self._ocr_page(page)
                     if ocr_text:
                         text = ocr_text
+                        scanned_pages_processed += 1
                 if text:
                     pages_content.append({"page": page_idx, "text": text})
         finally:

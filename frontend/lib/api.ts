@@ -67,26 +67,12 @@ export async function deleteDocument(
   return res.json();
 }
 
-export async function uploadDocuments(
-  files: File[],
+export async function uploadDocument(
+  file: File,
   token?: string
-): Promise<{
-  success: boolean;
-  message: string;
-  files: Array<{
-    filename: string;
-    chunks_added: number;
-    total_pages: number;
-    storage_path: string;
-    status: string;
-  }>;
-  chunks_added: number;
-  total_pages: number;
-}> {
+): Promise<any> {
   const formData = new FormData();
-  for (const file of files) {
-    formData.append("files", file);
-  }
+  formData.append("file", file);
 
   const headers: HeadersInit = {};
   if (token) {
@@ -100,16 +86,51 @@ export async function uploadDocuments(
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Upload failed: ${res.statusText}`);
+    throw new Error(errorData.detail || `Upload failed (${res.status}): ${res.statusText}`);
   }
   return res.json();
 }
 
-export async function uploadDocument(
-  file: File,
-  token?: string
-): Promise<any> {
-  return uploadDocuments([file], token);
+export async function uploadDocuments(
+  files: File[],
+  token?: string,
+  onProgress?: (current: number, total: number, filename: string) => void
+): Promise<{
+  success: boolean;
+  message: string;
+  files: any[];
+  errors?: string[];
+  chunks_added: number;
+  total_pages: number;
+}> {
+  const results: any[] = [];
+  const errors: string[] = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    if (onProgress) {
+      onProgress(i + 1, files.length, f.name);
+    }
+    try {
+      const res = await uploadDocument(f, token);
+      results.push(res);
+    } catch (e: any) {
+      errors.push(`${f.name}: ${e.message}`);
+    }
+  }
+
+  if (results.length === 0 && errors.length > 0) {
+    throw new Error(errors.join("; "));
+  }
+
+  return {
+    success: true,
+    message: `Processed ${results.length} of ${files.length} document(s)`,
+    files: results,
+    errors: errors.length > 0 ? errors : undefined,
+    chunks_added: results.reduce((acc, r) => acc + (r.chunks_added || 0), 0),
+    total_pages: results.reduce((acc, r) => acc + (r.total_pages || 0), 0),
+  };
 }
 
 export async function sendChatMessage(
