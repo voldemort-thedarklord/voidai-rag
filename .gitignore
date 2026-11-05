@@ -9,3 +9,14 @@ chroma_db/
 data/uploads/
 .aicb/
 
+# Backend
+backend/venv/
+backend/chroma_db/
+backend/data/uploads/
+backend/.env
+backend/__pycache__/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.env*.local

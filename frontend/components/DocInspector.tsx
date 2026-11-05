@@ -172,3 +172,4 @@ export default function DocInspector({
 function escapeRegex(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+

@@ -67,3 +67,4 @@ def verify_clerk_token(token: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         # Token is not a valid Clerk token
         return None
+

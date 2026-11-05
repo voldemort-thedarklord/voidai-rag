@@ -53,3 +53,4 @@ export interface BenchmarkResult {
   'Status': 'PASS' | 'FAIL';
   'Retrieval Hit': string;
 }
+
