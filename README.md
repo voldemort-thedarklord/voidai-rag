@@ -62,62 +62,57 @@ flowchart TD
 
 ---
 
-## 📂 Repository Directory Layout
+## 📂 Decoupled Repository Layout
 
 ```text
 ENTERPRISE_RAG/
-├── app.py                      # Modern Streamlit UI (Chat, Docs, RBAC, Evaluation tabs)
-├── ingest.py                   # Standalone CLI indexing and query shell
-├── requirements.txt            # Python dependencies
-├── .env.example                # Environment variables template
-├── .env                        # Local configuration
-├── data/
-│   ├── sample_policies/        # Pre-loaded corporate policies (HR, IT, Finance, Eng, Exec)
-│   └── uploads/                # Directory for user-uploaded documents
-├── chroma_db/                  # Local persistent Chroma vector database
-├── scripts/
-│   └── generate_sample_docs.py # Converts text policies into genuine PDF & DOCX files
-└── src/
-    ├── __init__.py
-    ├── config.py               # Central configuration (paths, models, RBAC mappings)
-    ├── document_processor.py   # Multi-format text extractor & recursive chunker
-    ├── vector_store.py         # ChromaDB client, upserts, deletions, and RBAC search
-    ├── llm_client.py           # Unified client for Ollama, Groq, OpenAI, and Gemini
-    ├── rag_pipeline.py         # End-to-end RAG orchestrator with citations & grounding
-    └── evaluator.py            # Automated benchmark evaluation suite
+├── frontend/                   # Modern Next.js 16 (App Router) Frontend
+│   ├── app/                    # App Router pages (/ & /sign-in & /sign-up)
+│   ├── components/             # VoidAI 3-Panel Workspace components
+│   ├── lib/api.ts              # Type-safe API client communicating with backend
+│   ├── proxy.ts                # Clerk Next.js route protection middleware
+│   ├── types/                  # TypeScript interface definitions
+│   └── package.json            # Node.js dependencies (@clerk/nextjs, lucide-react)
+│
+├── backend/                    # High-Performance FastAPI Microservice
+│   ├── server.py               # REST API endpoints (/api/documents, /api/chat, etc.)
+│   ├── requirements.txt        # Python dependencies (fastapi, chromadb, pymupdf, etc.)
+│   ├── .env                    # Cloud credentials (Supabase, Clerk issuer, Ollama)
+│   ├── data/                   # Enterprise uploaded documents repository
+│   ├── chroma_db/              # Persistent vector store (Cosine HNSW)
+│   ├── scripts/                # Helper tools and test scripts
+│   └── src/                    # Core RAG, Auth, and parsing subsystems
+│       ├── clerk_verifier.py   # Clerk RS256 JWKS token validation
+│       ├── supabase_manager.py # Cloud PostgreSQL and Storage integration
+│       ├── document_processor.py # Multi-format text extraction (PyMuPDF, docx)
+│       ├── vector_store.py     # ChromaDB client & RBAC metadata filtering
+│       ├── rag_pipeline.py     # Grounded retrieval & citation synthesis
+│       ├── llm_client.py       # Hybrid LLM engine (Ollama, Groq, OpenAI)
+│       └── evaluator.py        # Automated benchmark test suite
+│
+├── venv/                       # Shared Python virtual environment
+└── README.md
 ```
 
 ---
 
-## ⚙️ Installation & Setup
+## ⚙️ Running the Applications
 
-### Prerequisites
-- Python 3.10, 3.11, or 3.12 installed.
-- (Optional) [Ollama](https://ollama.com/) installed locally with `llama3` or `qwen2.5` pulled (`ollama pull llama3:latest`).
-
-### 1. Clone & Setup Virtual Environment
+### 1. Start the Backend API (FastAPI - Port 8501)
 ```bash
-cd ENTERPRISE_RAG
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+cd backend
+source venv/bin/activate
+python server.py
+# Server runs on http://localhost:8501
 ```
 
-### 2. Install Dependencies
+### 2. Start the Frontend (Next.js - Port 3000)
 ```bash
-pip install -r requirements.txt
+cd frontend
+npm run dev
+# Frontend runs on http://localhost:3000
 ```
 
-### 3. (Optional) Configure Cloud API Keys
-If you wish to use Cloud models in addition to Local Ollama, copy `.env.example` to `.env` and insert your keys:
-```env
-OLLAMA_BASE_URL=http://localhost:11434
-DEFAULT_OLLAMA_MODEL=llama3:latest
-GROQ_API_KEY=your_groq_key_here
-OPENAI_API_KEY=your_openai_key_here
-GEMINI_API_KEY=your_gemini_key_here
-```
-
----
 
 ## 🖥️ Running the Application
 
