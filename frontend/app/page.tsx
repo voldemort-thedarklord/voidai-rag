@@ -122,7 +122,7 @@ export default function WorkspacePage() {
 
     try {
       const token = await getToken();
-      const res = await sendChatMessage(query, "Admin", token || undefined);
+      const res = await sendChatMessage(query, selectedDocs, token || undefined);
 
       const assistantMsg: ChatMessage = {
         id: `asst-${Date.now()}`,
@@ -152,7 +152,7 @@ export default function WorkspacePage() {
 
   const handleUpload = async (file: File) => {
     const token = await getToken();
-    await uploadDocument(file, "General", token || undefined);
+    await uploadDocument(file, token || undefined);
     await loadDocuments();
   };
 

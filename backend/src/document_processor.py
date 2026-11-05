@@ -1,14 +1,23 @@
 """
 Document Processor Module
-Handles text extraction from PDF, DOCX, and TXT files, followed by
-recursive character-aware chunking and metadata preservation.
+Handles text extraction from PDF, DOCX, and TXT files with OCR fallback for scanned PDFs,
+followed by recursive character-aware chunking and metadata preservation.
 """
 
 from pathlib import Path
 import hashlib
+import io
 from typing import List, Dict, Any, Optional
 import pymupdf
 import docx
+from PIL import Image
+
+try:
+    from rapidocr_onnxruntime import RapidOCR
+    _ocr_engine = RapidOCR()
+except Exception as e:
+    print(f"[DocumentProcessor] RapidOCR not available: {e}")
+    _ocr_engine = None
 
 from src.config import DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP
 
@@ -22,7 +31,6 @@ class DocumentChunk:
         source: str,
         page: int,
         chunk_index: int,
-        department: str,
         metadata: Optional[Dict[str, Any]] = None
     ):
         self.chunk_id = chunk_id
@@ -30,7 +38,6 @@ class DocumentChunk:
         self.source = source
         self.page = page
         self.chunk_index = chunk_index
-        self.department = department
         self.metadata = metadata or {}
 
     def to_dict(self) -> Dict[str, Any]:
@@ -41,14 +48,13 @@ class DocumentChunk:
                 "source": self.source,
                 "page": self.page,
                 "chunk_index": self.chunk_index,
-                "department": self.department,
                 **self.metadata
             }
         }
 
 
 class DocumentProcessor:
-    """Extracts, cleans, and chunks enterprise documents."""
+    """Extracts, cleans, and chunks documents with automatic OCR for scanned files."""
 
     def __init__(
         self,
@@ -67,13 +73,33 @@ class DocumentProcessor:
                 hasher.update(byte_block)
         return hasher.hexdigest()[:12]
 
+    def _ocr_page(self, page: pymupdf.Page) -> str:
+        """Runs RapidOCR on a rendered PyMuPDF page pixmap."""
+        if not _ocr_engine:
+            return ""
+        try:
+            pix = page.get_pixmap(dpi=150)
+            img = Image.open(io.BytesIO(pix.tobytes("png")))
+            result, _ = _ocr_engine(img)
+            if result:
+                lines = [line[1] for line in result if line and len(line) > 1]
+                return "\n".join(lines).strip()
+        except Exception as e:
+            print(f"[DocumentProcessor] OCR extraction error: {e}")
+        return ""
+
     def extract_text_from_pdf(self, file_path: Path) -> List[Dict[str, Any]]:
-        """Extract text page-by-page from PDF using PyMuPDF."""
+        """Extract text page-by-page from PDF using PyMuPDF with OCR fallback for scans."""
         pages_content = []
         doc = pymupdf.open(file_path)
         try:
             for page_idx, page in enumerate(doc, start=1):
                 text = page.get_text("text").strip()
+                # If page contains little to no selectable text, attempt OCR
+                if len(text) < 20:
+                    ocr_text = self._ocr_page(page)
+                    if ocr_text:
+                        text = ocr_text
                 if text:
                     pages_content.append({"page": page_idx, "text": text})
         finally:
@@ -115,16 +141,14 @@ class DocumentProcessor:
         2. Lines (\n)
         3. Sentences (. )
         4. Spaces (' ')
-        Ensures chunks do not break in the middle of sentences when possible.
         """
         if len(text) <= self.chunk_size:
             return [text.strip()] if text.strip() else []
 
         separators = ["\n\n", "\n", ". ", " "]
-        
+
         def _split(txt: str, sep_idx: int) -> List[str]:
             if len(txt) <= self.chunk_size or sep_idx >= len(separators):
-                # Fallback: slice directly if no further separators
                 chunks = []
                 step = max(1, self.chunk_size - self.chunk_overlap)
                 for start in range(0, len(txt), step):
@@ -145,7 +169,6 @@ class DocumentProcessor:
                 else:
                     if current_chunk:
                         chunks.append(current_chunk.strip())
-                    # If this single part itself exceeds chunk size, split it with next separator
                     if len(part) > self.chunk_size:
                         sub_chunks = _split(part, sep_idx + 1)
                         chunks.extend(sub_chunks)
@@ -159,12 +182,10 @@ class DocumentProcessor:
             return chunks
 
         raw_chunks = _split(text, 0)
-        
-        # Merge small residual chunks and apply overlap
+
         refined_chunks = []
         for i, ch in enumerate(raw_chunks):
             if len(ch) < 30 and i > 0:
-                # Merge tiny fragment into previous chunk if space allows
                 if len(refined_chunks[-1]) + len(ch) + 1 <= self.chunk_size:
                     refined_chunks[-1] = f"{refined_chunks[-1]} {ch}"
                     continue
@@ -175,18 +196,22 @@ class DocumentProcessor:
     def get_document_page_text(self, file_path: Path, page_num: int = 1) -> Dict[str, Any]:
         """
         Retrieves text for a specific page of a document for the Document Viewer.
-        Returns total_pages and page_text.
+        Returns total_pages and page_text with OCR support for scanned pages.
         """
         suffix = file_path.suffix.lower()
         if suffix == ".pdf":
             doc = pymupdf.open(file_path)
             total = len(doc)
             target_page = max(1, min(page_num, total))
-            page_text = doc[target_page - 1].get_text("text")
+            page = doc[target_page - 1]
+            page_text = page.get_text("text").strip()
+            if len(page_text) < 20:
+                ocr_text = self._ocr_page(page)
+                if ocr_text:
+                    page_text = ocr_text
             doc.close()
             return {"total_pages": total, "page_num": target_page, "text": page_text}
 
-        # For text or docx, load full text and paginate roughly 1200 chars per page
         if suffix in [".docx", ".doc"]:
             pages = self.extract_text_from_docx(file_path)
         else:
@@ -213,14 +238,10 @@ class DocumentProcessor:
         page_text = paginated[target_page - 1] if paginated else full_text
         return {"total_pages": total, "page_num": target_page, "text": page_text}
 
-    def process_file(
-        self,
-        file_path: Path,
-        department: str = "General"
-    ) -> List[DocumentChunk]:
+    def process_file(self, file_path: Path) -> List[DocumentChunk]:
         """
-        Processes a single file: extracts text, splits into chunks, and
-        attaches granular metadata (source, page, department, chunk_id).
+        Processes a single file: extracts text (with OCR if scanned), splits into chunks,
+        and attaches granular metadata (source, page, chunk_id).
         """
         pages = self.extract_text(file_path)
         file_hash = self.compute_file_hash(file_path)
@@ -242,7 +263,6 @@ class DocumentProcessor:
                     source=filename,
                     page=page_num,
                     chunk_index=idx,
-                    department=department,
                     metadata={
                         "char_count": len(chunk_text),
                         "file_hash": file_hash

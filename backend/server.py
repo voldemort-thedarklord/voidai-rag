@@ -32,8 +32,6 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from src.config import (
-    ROLES_PERMISSIONS,
-    ALL_DEPARTMENTS,
     DEFAULT_TOP_K,
     DEFAULT_OLLAMA_MODEL,
     SAMPLE_POLICIES_DIR,
@@ -79,8 +77,6 @@ class SignUpRequest(BaseModel):
     email: str
     password: str
     full_name: Optional[str] = ""
-    role: str = "General Employee"
-    department: str = "General"
 
 
 class SignInRequest(BaseModel):
@@ -90,7 +86,6 @@ class SignInRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     query: str
-    user_role: str = "Admin"
     provider: str = "ollama"
     model: str = DEFAULT_OLLAMA_MODEL
     top_k: int = DEFAULT_TOP_K
@@ -298,7 +293,6 @@ async def get_documents(current_user: Dict[str, Any] = Depends(get_current_user)
 @app.post("/api/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    department: str = Form("General"),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """
@@ -323,8 +317,8 @@ async def upload_document(
         with open(save_path, "wb") as f:
             f.write(file_bytes)
 
-        # 3. Process into chunks & index in Vector Store
-        chunks = doc_processor.process_file(save_path, department=department)
+        # 3. Process into chunks & index in Vector Store (with OCR support)
+        chunks = doc_processor.process_file(save_path)
         count = vector_store.add_chunks(chunks)
 
         # 4. Get page count
@@ -339,7 +333,6 @@ async def upload_document(
                 storage_path=storage_path,
                 file_size=len(file_bytes),
                 mime_type=mime_type,
-                department=department,
                 chunk_count=len(chunks),
                 page_count=total_pages,
                 uploaded_by=user_id
@@ -348,7 +341,6 @@ async def upload_document(
         return {
             "success": True,
             "filename": filename,
-            "department": department,
             "chunks_added": count,
             "total_pages": total_pages,
             "storage_path": storage_path
@@ -412,17 +404,16 @@ async def chat_endpoint(
     req: ChatRequest,
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
-    """Protected: Runs query through RAG pipeline and persists history in Supabase."""
+    """Protected: Runs query through RAG pipeline across all user documents."""
     try:
-        user_role = current_user.get("role") or req.user_role
         user_id = current_user.get("user_id")
 
         result = rag_pipeline.run(
             query=req.query,
-            user_role=user_role,
             provider=req.provider,
             model=req.model,
-            top_k=req.top_k
+            top_k=req.top_k,
+            selected_documents=req.selected_documents
         )
 
         # Persist conversation in Supabase
@@ -430,7 +421,6 @@ async def chat_endpoint(
             supabase_manager.save_chat_message(
                 query=req.query,
                 answer=result.get("answer", ""),
-                user_role=user_role,
                 citations=result.get("citations", []),
                 metrics=result.get("metrics", {}),
                 user_id=user_id
@@ -463,15 +453,6 @@ async def run_evaluation(
     return {
         "scorecard": res["scorecard"],
         "results": res["raw_results"]
-    }
-
-
-@app.get("/api/roles")
-async def get_roles(current_user: Dict[str, Any] = Depends(get_current_user)):
-    """Protected: Returns available RBAC roles and permissions."""
-    return {
-        "roles": ROLES_PERMISSIONS,
-        "departments": ALL_DEPARTMENTS
     }
 
 

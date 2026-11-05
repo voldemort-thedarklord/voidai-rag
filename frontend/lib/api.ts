@@ -1,4 +1,4 @@
-import { DocumentItem, ChatMessage, BenchmarkScorecard, BenchmarkResult } from "@/types";
+import { DocumentItem, ChatMessage } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8501";
 
@@ -68,12 +68,10 @@ export async function deleteDocument(
 
 export async function uploadDocument(
   file: File,
-  department: string = "General",
   token?: string
 ): Promise<any> {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("department", department);
 
   const headers: HeadersInit = {};
   if (token) {
@@ -94,7 +92,7 @@ export async function uploadDocument(
 
 export async function sendChatMessage(
   query: string,
-  userRole: string = "Admin",
+  selectedDocuments?: string[],
   token?: string
 ): Promise<any> {
   const res = await fetch(`${API_BASE}/api/chat`, {
@@ -102,9 +100,9 @@ export async function sendChatMessage(
     headers: getHeaders(token),
     body: JSON.stringify({
       query,
-      user_role: userRole,
       provider: "ollama",
       model: "llama3:latest",
+      selected_documents: selectedDocuments,
     }),
   });
   if (!res.ok) {
@@ -119,7 +117,6 @@ export async function fetchChatHistory(token?: string): Promise<{
   history: Array<{
     query: string;
     answer: string;
-    user_role: string;
     citations?: any[];
     metrics?: any;
     created_at?: string;
@@ -133,17 +130,3 @@ export async function fetchChatHistory(token?: string): Promise<{
   }
   return res.json();
 }
-
-export async function runEvaluation(token?: string): Promise<{
-  scorecard: BenchmarkScorecard;
-  results: BenchmarkResult[];
-}> {
-  const res = await fetch(`${API_BASE}/api/eval`, {
-    headers: getHeaders(token),
-  });
-  if (!res.ok) {
-    throw new Error(`Benchmark evaluation failed: ${res.statusText}`);
-  }
-  return res.json();
-}
-

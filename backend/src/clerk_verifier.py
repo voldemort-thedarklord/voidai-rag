@@ -59,9 +59,7 @@ def verify_clerk_token(token: str) -> Optional[Dict[str, Any]]:
         return {
             "user_id": user_id,
             "email": payload.get("email") or f"{user_id}@clerk.user",
-            "role": payload.get("role") or payload.get("metadata", {}).get("role", "Admin"),
-            "full_name": payload.get("name") or "Clerk User",
-            "department": payload.get("department", "General"),
+            "full_name": payload.get("name") or "User",
             "provider": "clerk"
         }
     except Exception as e:

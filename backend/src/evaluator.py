@@ -128,7 +128,6 @@ class RAGEvaluator:
 
             output = self.pipeline.run(
                 query=tc["question"],
-                user_role=tc["user_role"],
                 provider=provider,
                 model=model
             )

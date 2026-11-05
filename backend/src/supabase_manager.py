@@ -38,9 +38,7 @@ class SupabaseManager:
         self,
         email: str,
         password: str,
-        full_name: str = "",
-        role: str = "General Employee",
-        department: str = "General"
+        full_name: str = ""
     ) -> Dict[str, Any]:
         """Sign up a new user, create confirmed account in Supabase, and return session."""
         if not self.client:
@@ -54,9 +52,7 @@ class SupabaseManager:
             rpc_res = self.client.rpc("create_voidai_user", {
                 "p_email": clean_email,
                 "p_password": password,
-                "p_full_name": clean_name,
-                "p_role": role,
-                "p_department": department
+                "p_full_name": clean_name
             }).execute()
         except Exception as e:
             err_msg = str(e)
@@ -68,9 +64,7 @@ class SupabaseManager:
                 "password": password,
                 "options": {
                     "data": {
-                        "full_name": clean_name,
-                        "role": role,
-                        "department": department
+                        "full_name": clean_name
                     }
                 }
             })
@@ -81,16 +75,14 @@ class SupabaseManager:
                 "email": user.email if user else clean_email,
                 "access_token": session.access_token if session else None,
                 "refresh_token": session.refresh_token if session else None,
-                "role": role,
-                "full_name": clean_name,
-                "department": department
+                "full_name": clean_name
             }
 
         # User is created & confirmed; immediately sign in to retrieve JWT access token
         return self.sign_in(clean_email, password)
 
     def sign_in(self, email: str, password: str) -> Dict[str, Any]:
-        """Sign in with email and password, fetch profile and active role."""
+        """Sign in with email and password."""
         if not self.client:
             raise RuntimeError("Supabase client not initialized")
 
@@ -104,7 +96,6 @@ class SupabaseManager:
             raise RuntimeError("Authentication failed")
 
         profile = self.get_profile(user.id)
-        role = profile.get("role", "General Employee") if profile else "General Employee"
         full_name = profile.get("full_name", email.split("@")[0]) if profile else email.split("@")[0]
 
         return {
@@ -112,9 +103,7 @@ class SupabaseManager:
             "email": user.email,
             "access_token": session.access_token,
             "refresh_token": session.refresh_token,
-            "role": role,
-            "full_name": full_name,
-            "department": profile.get("department", "General") if profile else "General"
+            "full_name": full_name
         }
 
     def get_profile(self, user_id: str) -> Optional[Dict[str, Any]]:
@@ -140,9 +129,7 @@ class SupabaseManager:
                 return {
                     "user_id": user_resp.user.id,
                     "email": user_resp.user.email,
-                    "role": profile.get("role", "General Employee") if profile else "General Employee",
-                    "full_name": profile.get("full_name", "") if profile else "",
-                    "department": profile.get("department", "General") if profile else "General"
+                    "full_name": profile.get("full_name", "") if profile else ""
                 }
         except Exception as e:
             print(f"[SupabaseManager] Token validation error: {e}")
@@ -175,7 +162,6 @@ class SupabaseManager:
         storage_path: str,
         file_size: int,
         mime_type: str,
-        department: str,
         chunk_count: int,
         page_count: int,
         uploaded_by: Optional[str] = None
@@ -189,7 +175,6 @@ class SupabaseManager:
             "storage_path": storage_path,
             "file_size": file_size,
             "mime_type": mime_type,
-            "department": department,
             "chunk_count": chunk_count,
             "page_count": page_count,
             "uploaded_by": uploaded_by
@@ -209,9 +194,8 @@ class SupabaseManager:
             for d in res.data:
                 docs.append({
                     "source": d["filename"],
-                    "department": d["department"],
-                    "total_chunks": d["chunk_count"],
-                    "max_pages": d["page_count"],
+                    "total_chunks": d.get("chunk_count", 0),
+                    "max_pages": d.get("page_count", 1),
                     "file_size": d.get("file_size", 0),
                     "created_at": d.get("created_at")
                 })
@@ -251,7 +235,6 @@ class SupabaseManager:
         self,
         query: str,
         answer: str,
-        user_role: str,
         citations: List[Dict[str, Any]],
         metrics: Dict[str, Any],
         user_id: Optional[str] = None
@@ -262,7 +245,7 @@ class SupabaseManager:
         try:
             self.client.table("voidai_chat_history").insert({
                 "user_id": user_id,
-                "user_role": user_role,
+                "user_role": "user",
                 "query": query,
                 "answer": answer,
                 "citations": citations,

@@ -46,15 +46,3 @@ SUPPORTED_LLM_PROVIDERS = {
     "OpenAI (GPT-4o mini)": "openai",
     "Google Gemini": "gemini"
 }
-
-# Role-Based Access Control (RBAC) Configuration
-ROLES_PERMISSIONS = {
-    "Admin": ["General", "HR", "Engineering", "Finance", "Executive"],
-    "Executive": ["General", "HR", "Engineering", "Finance", "Executive"],
-    "HR Manager": ["General", "HR"],
-    "Software Engineer": ["General", "HR", "Engineering"],
-    "Finance Analyst": ["General", "HR", "Finance"],
-    "General Employee": ["General", "HR"]
-}
-
-ALL_DEPARTMENTS = ["General", "HR", "Engineering", "Finance", "Executive"]

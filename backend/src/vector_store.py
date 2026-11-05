@@ -68,17 +68,18 @@ class VectorStoreManager:
         self,
         query: str,
         top_k: int = DEFAULT_TOP_K,
-        allowed_departments: Optional[List[str]] = None
+        selected_documents: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """
-        Perform semantic similarity search with optional RBAC department filtering.
+        Perform semantic similarity search across indexed documents.
+        Optionally filter by selected_documents list.
         """
         where_filter = None
-        if allowed_departments:
-            if len(allowed_departments) == 1:
-                where_filter = {"department": allowed_departments[0]}
+        if selected_documents:
+            if len(selected_documents) == 1:
+                where_filter = {"source": selected_documents[0]}
             else:
-                where_filter = {"department": {"$in": allowed_departments}}
+                where_filter = {"source": {"$in": selected_documents}}
 
         results = self.collection.query(
             query_texts=[query],
@@ -117,12 +118,10 @@ class VectorStoreManager:
         for meta in all_data["metadatas"]:
             source = meta.get("source", "Unknown")
             page = meta.get("page", 1)
-            dept = meta.get("department", "General")
 
             if source not in doc_summary:
                 doc_summary[source] = {
                     "source": source,
-                    "department": dept,
                     "total_chunks": 0,
                     "max_pages": 1
                 }
