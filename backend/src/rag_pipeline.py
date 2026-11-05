@@ -10,7 +10,6 @@ from typing import Dict, Any, List, Optional
 
 from src.config import (
     DEFAULT_TOP_K,
-    DEFAULT_OLLAMA_MODEL,
     DEFAULT_GEMINI_MODEL,
     DEFAULT_LLM_PROVIDER
 )
@@ -39,8 +38,8 @@ class RAGPipeline:
     def run(
         self,
         query: str,
-        provider: str = "ollama",
-        model: str = DEFAULT_OLLAMA_MODEL,
+        provider: str = "gemini",
+        model: Optional[str] = None,
         top_k: int = DEFAULT_TOP_K,
         selected_documents: Optional[List[str]] = None,
         temperature: float = 0.1

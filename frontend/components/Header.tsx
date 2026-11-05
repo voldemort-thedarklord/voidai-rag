@@ -6,15 +6,9 @@ import { Plus } from "lucide-react";
 
 interface HeaderProps {
   onOpenUpload: () => void;
-  engine: "gemini" | "ollama";
-  onEngineChange: (engine: "gemini" | "ollama") => void;
 }
 
-export default function Header({
-  onOpenUpload,
-  engine,
-  onEngineChange,
-}: HeaderProps) {
+export default function Header({ onOpenUpload }: HeaderProps) {
   return (
     <header className="w-full max-w-[1420px] mx-auto flex items-center justify-between pb-3.5 border-b border-[#222222]">
       {/* Brand */}
@@ -25,32 +19,6 @@ export default function Header({
         <span className="text-sm font-semibold tracking-wide text-white lowercase font-mono">
           voidai
         </span>
-      </div>
-
-      {/* Center: Engine Toggle (Cloud Gemini vs Local Ollama) */}
-      <div className="inline-flex p-0.5 bg-[#0A0A0A] rounded-md border border-[#222222] font-mono text-[11px]">
-        <button
-          onClick={() => onEngineChange("gemini")}
-          className={`px-2.5 py-1 rounded transition ${
-            engine === "gemini"
-              ? "bg-white text-black font-semibold shadow-xs"
-              : "text-[#737373] hover:text-white"
-          }`}
-          title="Google Gemini Cloud (Free, fast)"
-        >
-          Cloud (Gemini)
-        </button>
-        <button
-          onClick={() => onEngineChange("ollama")}
-          className={`px-2.5 py-1 rounded transition ${
-            engine === "ollama"
-              ? "bg-white text-black font-semibold shadow-xs"
-              : "text-[#737373] hover:text-white"
-          }`}
-          title="Local Ollama (Private, offline)"
-        >
-          Local (Ollama)
-        </button>
       </div>
 
       {/* Right Controls: Upload & Auth */}

@@ -93,7 +93,6 @@ export async function uploadDocument(
 export async function sendChatMessage(
   query: string,
   selectedDocuments?: string[],
-  provider: string = "gemini",
   token?: string
 ): Promise<any> {
   const res = await fetch(`${API_BASE}/api/chat`, {
@@ -101,7 +100,7 @@ export async function sendChatMessage(
     headers: getHeaders(token),
     body: JSON.stringify({
       query,
-      provider,
+      provider: "gemini",
       selected_documents: selectedDocuments,
     }),
   });
@@ -116,7 +115,6 @@ export async function fetchSystemStatus(): Promise<{
   gemini_configured: boolean;
   default_provider: string;
   default_model: string;
-  supported_providers: string[];
 }> {
   try {
     const res = await fetch(`${API_BASE}/api/system/status`);
@@ -128,7 +126,6 @@ export async function fetchSystemStatus(): Promise<{
     gemini_configured: true,
     default_provider: "gemini",
     default_model: "gemini-flash-lite-latest",
-    supported_providers: ["gemini", "ollama"],
   };
 }
 

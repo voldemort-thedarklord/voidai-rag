@@ -1,0 +1,26 @@
+services:
+  # VOIDAI FastAPI Backend Service
+  - type: web
+    name: voidai-backend
+    env: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: CLERK_ISSUER
+        value: https://settled-moccasin-3297.clerk.accounts.dev
+      - key: DEFAULT_GEMINI_MODEL
+        value: gemini-flash-lite-latest

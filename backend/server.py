@@ -5,6 +5,7 @@ All routes (including home) are protected with Supabase Auth validation.
 """
 
 import sys
+import os
 from pathlib import Path
 import shutil
 from typing import List, Dict, Any, Optional
@@ -33,7 +34,6 @@ if str(BASE_DIR) not in sys.path:
 
 from src.config import (
     DEFAULT_TOP_K,
-    DEFAULT_OLLAMA_MODEL,
     DEFAULT_GEMINI_MODEL,
     DEFAULT_LLM_PROVIDER,
     GEMINI_API_KEY,
@@ -436,14 +436,21 @@ async def chat_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/health")
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint for Render deployment monitoring."""
+    return {"status": "healthy", "service": "voidai-backend", "engine": "gemini-cloud"}
+
+
 @app.get("/api/system/status")
 async def system_status():
-    """Returns engine availability for Gemini Cloud and Local Ollama."""
+    """Returns engine availability for Gemini Cloud."""
     return {
         "gemini_configured": bool(GEMINI_API_KEY),
-        "default_provider": DEFAULT_LLM_PROVIDER,
-        "default_model": DEFAULT_GEMINI_MODEL if DEFAULT_LLM_PROVIDER == "gemini" else DEFAULT_OLLAMA_MODEL,
-        "supported_providers": ["gemini", "ollama"]
+        "default_provider": "gemini",
+        "default_model": DEFAULT_GEMINI_MODEL,
+        "supported_providers": ["gemini"]
     }
 
 
@@ -459,13 +466,12 @@ async def get_chat_history_endpoint(
 
 @app.get("/api/eval")
 async def run_evaluation(
-    provider: str = "ollama",
-    model: str = DEFAULT_OLLAMA_MODEL,
+    model: str = DEFAULT_GEMINI_MODEL,
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Protected: Runs automated benchmark evaluation suite."""
     evaluator = RAGEvaluator(pipeline=rag_pipeline)
-    res = evaluator.run_benchmark(provider=provider, model=model)
+    res = evaluator.run_benchmark(provider="gemini", model=model)
     return {
         "scorecard": res["scorecard"],
         "results": res["raw_results"]
@@ -476,4 +482,5 @@ async def run_evaluation(
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="0.0.0.0", port=8501, reload=False)
+    port = int(os.getenv("PORT", "8501"))
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)

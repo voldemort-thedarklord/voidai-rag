@@ -111,7 +111,7 @@ export default function ChatPanel({
                 </button>
                 {msg.metrics?.provider && (
                   <span className="text-[10px] text-[#525252]">
-                    via {msg.metrics.provider === "gemini" ? "Cloud Gemini" : "Local Ollama"}
+                    via Cloud Gemini
                     {msg.metrics.total_latency_ms ? ` (${(msg.metrics.total_latency_ms / 1000).toFixed(1)}s)` : ""}
                   </span>
                 )}

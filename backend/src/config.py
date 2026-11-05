@@ -32,20 +32,12 @@ DEFAULT_CHUNK_OVERLAP = 120
 DEFAULT_TOP_K = 4
 SIMILARITY_SCORE_THRESHOLD = 0.25  # Cosine distance threshold (lower is closer in Chroma L2/cosine)
 
-# LLM Providers & Models
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-DEFAULT_OLLAMA_MODEL = os.getenv("DEFAULT_OLLAMA_MODEL", "llama3:latest")
+# LLM Providers & Models (Cloud Gemini Exclusively)
 DEFAULT_GEMINI_MODEL = os.getenv("DEFAULT_GEMINI_MODEL", "gemini-flash-lite-latest")
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-DEFAULT_LLM_PROVIDER = "gemini" if GEMINI_API_KEY else "ollama"
+DEFAULT_LLM_PROVIDER = "gemini"
 
 SUPPORTED_LLM_PROVIDERS = {
-    "Google Gemini (Cloud Free)": "gemini",
-    "Local Ollama (Offline / Private)": "ollama",
-    "Groq (Fast Cloud Inference)": "groq",
-    "OpenAI (GPT-4o mini)": "openai"
+    "Google Gemini (Cloud Free)": "gemini"
 }
