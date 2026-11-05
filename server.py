@@ -46,13 +46,20 @@ from src.rag_pipeline import RAGPipeline
 from src.llm_client import LLMClient
 from src.evaluator import RAGEvaluator
 from src.supabase_manager import SupabaseManager
+from src.clerk_verifier import verify_clerk_token
 
 app = FastAPI(title="VOIDAI Enterprise RAG")
 
-# Enable CORS
+# Enable CORS for Next.js frontend (port 3000) and backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8501",
+        "http://127.0.0.1:8501",
+    ],
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -114,7 +121,7 @@ async def get_current_user(
 ) -> Dict[str, Any]:
     """
     Enforces authentication on protected routes.
-    Validates token against Supabase Auth.
+    Validates token against Clerk JWKS or Supabase Auth.
     """
     token = extract_token_from_request(request, authorization)
     if not token:
@@ -123,14 +130,20 @@ async def get_current_user(
             detail="Authentication required. Please sign in."
         )
 
-    user = supabase_manager.get_user_from_token(token)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired session token. Please sign in again."
-        )
+    # 1. Try Clerk verification
+    clerk_user = verify_clerk_token(token)
+    if clerk_user:
+        return clerk_user
 
-    return user
+    # 2. Try Supabase verification
+    user = supabase_manager.get_user_from_token(token)
+    if user:
+        return user
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired session token. Please sign in again."
+    )
 
 
 # ==========================================
@@ -149,7 +162,9 @@ async def serve_home(
       - API Client: Returns 401 Unauthorized
     """
     token = extract_token_from_request(request, authorization)
-    user = supabase_manager.get_user_from_token(token) if token else None
+    user = None
+    if token:
+        user = verify_clerk_token(token) or supabase_manager.get_user_from_token(token)
 
     if not user:
         accept_header = request.headers.get("accept", "")
