@@ -126,7 +126,7 @@
       </button>
     </div>
 
-    <!-- Right System Specs with Minimalist Role Selector -->
+    <!-- Right System Specs with Minimalist Role Selector & Supabase Auth -->
     <div class="flex items-center space-x-3 text-xs font-mono">
       <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-mono-800 bg-mono-950 text-mono-400 text-[11px]">
         <span class="text-mono-500">ROLE:</span>
@@ -139,9 +139,25 @@
           <option value="General Employee">GENERAL</option>
         </select>
       </div>
-      <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-mono-800 bg-mono-950 text-mono-400 text-[11px]">
-        <span class="text-mono-500">ENGINE:</span>
-        <span class="text-white font-medium">OLLAMA / LLAMA3</span>
+      
+      <!-- Supabase Auth Status Controls -->
+      <div id="auth-logged-out" class="flex items-center space-x-1.5">
+        <button onclick="openAuthModal('signin')" class="px-2.5 py-1 text-[11px] font-mono text-mono-300 hover:text-white bg-mono-900 border border-mono-800 hover:border-mono-600 rounded transition">
+          SIGN IN
+        </button>
+        <button onclick="openAuthModal('signup')" class="px-2.5 py-1 text-[11px] font-mono text-mono-black font-semibold bg-white hover:bg-mono-200 rounded transition">
+          SIGN UP
+        </button>
+      </div>
+
+      <div id="auth-logged-in" class="hidden flex items-center space-x-2">
+        <div class="flex items-center space-x-1 px-2 py-0.5 rounded border border-mono-800 bg-mono-900 text-[11px] text-mono-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span id="user-email-display" class="truncate max-w-[130px]">user@acme.com</span>
+        </div>
+        <button onclick="handleSignOut()" title="Sign Out" class="px-2 py-1 text-[11px] text-mono-400 hover:text-white border border-mono-800 hover:border-mono-600 rounded transition">
+          LOGOUT
+        </button>
       </div>
     </div>
   </header>
@@ -479,6 +495,90 @@
     </div>
   </div>
 
+  <!-- ============================================== -->
+  <!-- MODAL 3: AUTHENTICATION MODAL (SUPABASE AUTH)  -->
+  <!-- ============================================== -->
+  <div id="auth-modal" class="fixed inset-0 bg-black/85 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-mono-950 border border-mono-800 rounded-lg p-6 w-full max-w-sm shadow-2xl space-y-4 font-mono">
+      <div class="flex justify-between items-center border-b border-mono-800 pb-3">
+        <h3 class="text-xs font-semibold text-white tracking-wider uppercase flex items-center gap-2">
+          <span>VOIDAI // IAM AUTH</span>
+        </h3>
+        <button onclick="closeAuthModal()" class="text-mono-500 hover:text-white">✕</button>
+      </div>
+
+      <!-- Tab Switcher (Sign In vs Sign Up) -->
+      <div class="grid grid-cols-2 p-0.5 bg-mono-900 rounded border border-mono-800 text-xs">
+        <button onclick="setAuthTab('signin')" id="btn-auth-tab-signin" class="py-1 text-center font-semibold rounded bg-white text-mono-black transition">
+          SIGN IN
+        </button>
+        <button onclick="setAuthTab('signup')" id="btn-auth-tab-signup" class="py-1 text-center text-mono-400 hover:text-white rounded transition">
+          SIGN UP
+        </button>
+      </div>
+
+      <!-- Feedback / Alert Message -->
+      <div id="auth-alert" class="hidden text-[11px] p-2.5 rounded border"></div>
+
+      <!-- SIGN IN FORM -->
+      <form id="form-signin" onsubmit="handleAuthSignIn(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Corporate Email</label>
+          <input type="email" id="signin-email" required placeholder="user@company.com" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
+        </div>
+        <div>
+          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Password</label>
+          <input type="password" id="signin-password" required placeholder="••••••••••••" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
+        </div>
+        <button type="submit" id="btn-submit-signin" class="w-full py-2 bg-white hover:bg-mono-200 text-black text-xs font-semibold rounded transition mt-2">
+          AUTHENTICATE →
+        </button>
+      </form>
+
+      <!-- SIGN UP FORM -->
+      <form id="form-signup" onsubmit="handleAuthSignUp(event)" class="space-y-3 text-xs hidden">
+        <div>
+          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Full Name</label>
+          <input type="text" id="signup-fullname" required placeholder="Jane Doe" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
+        </div>
+        <div>
+          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Corporate Email</label>
+          <input type="email" id="signup-email" required placeholder="jane@company.com" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
+        </div>
+        <div>
+          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Password</label>
+          <input type="password" id="signup-password" required minlength="6" placeholder="••••••••••••" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-mono-400 mb-1 text-[10px] uppercase">RBAC Role</label>
+            <select id="signup-role" class="w-full bg-mono-900 border border-mono-800 rounded p-1.5 text-xs text-white">
+              <option value="Admin">Admin</option>
+              <option value="Executive">Executive</option>
+              <option value="HR Manager">HR Manager</option>
+              <option value="Software Engineer">Engineer</option>
+              <option value="Finance Analyst">Finance</option>
+              <option value="General Employee">General</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-mono-400 mb-1 text-[10px] uppercase">Dept</label>
+            <select id="signup-dept" class="w-full bg-mono-900 border border-mono-800 rounded p-1.5 text-xs text-white">
+              <option value="General">General</option>
+              <option value="HR">HR</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Finance">Finance</option>
+              <option value="Executive">Executive</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" id="btn-submit-signup" class="w-full py-2 bg-white hover:bg-mono-200 text-black text-xs font-semibold rounded transition mt-2">
+          CREATE ACCOUNT →
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- JAVASCRIPT LOGIC -->
   <script>
     let currentZoom = 100;
@@ -487,10 +587,206 @@
     let totalPages = 3;
     let currentRole = 'Admin';
     let availableDocs = [];
+    
+    // Supabase Auth State
+    let authToken = localStorage.getItem('voidai_token') || null;
+    let authUser = JSON.parse(localStorage.getItem('voidai_user') || 'null');
 
     document.addEventListener('DOMContentLoaded', () => {
+      checkAuthSession();
       fetchDocuments();
     });
+
+    // ==========================================
+    // SUPABASE AUTHENTICATION
+    // ==========================================
+    async function checkAuthSession() {
+      if (!authToken) {
+        updateAuthUI(null);
+        return;
+      }
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          authUser = data.user;
+          localStorage.setItem('voidai_user', JSON.stringify(authUser));
+          updateAuthUI(authUser);
+        } else {
+          // Token expired
+          handleSignOut();
+        }
+      } catch (e) {
+        console.error('Session check error:', e);
+      }
+    }
+
+    function updateAuthUI(user) {
+      const loggedOutDiv = document.getElementById('auth-logged-out');
+      const loggedInDiv = document.getElementById('auth-logged-in');
+      const emailDisplay = document.getElementById('user-email-display');
+      const roleSelect = document.getElementById('user-role-select');
+
+      if (user) {
+        loggedOutDiv.classList.add('hidden');
+        loggedInDiv.classList.remove('hidden');
+        emailDisplay.innerText = user.email || 'user';
+        if (user.role && roleSelect) {
+          roleSelect.value = user.role;
+          currentRole = user.role;
+        }
+      } else {
+        loggedOutDiv.classList.remove('hidden');
+        loggedInDiv.classList.add('hidden');
+      }
+    }
+
+    function openAuthModal(tab = 'signin') {
+      document.getElementById('auth-modal').classList.remove('hidden');
+      setAuthTab(tab);
+      hideAuthAlert();
+    }
+
+    function closeAuthModal() {
+      document.getElementById('auth-modal').classList.add('hidden');
+    }
+
+    function setAuthTab(tab) {
+      const btnIn = document.getElementById('btn-auth-tab-signin');
+      const btnUp = document.getElementById('btn-auth-tab-signup');
+      const formIn = document.getElementById('form-signin');
+      const formUp = document.getElementById('form-signup');
+
+      if (tab === 'signin') {
+        btnIn.className = 'py-1 text-center font-semibold rounded bg-white text-mono-black transition';
+        btnUp.className = 'py-1 text-center text-mono-400 hover:text-white rounded transition';
+        formIn.classList.remove('hidden');
+        formUp.classList.add('hidden');
+      } else {
+        btnUp.className = 'py-1 text-center font-semibold rounded bg-white text-mono-black transition';
+        btnIn.className = 'py-1 text-center text-mono-400 hover:text-white rounded transition';
+        formUp.classList.remove('hidden');
+        formIn.classList.add('hidden');
+      }
+      hideAuthAlert();
+    }
+
+    function showAuthAlert(msg, isError = false) {
+      const el = document.getElementById('auth-alert');
+      el.className = isError 
+        ? 'text-[11px] p-2.5 rounded border border-mono-700 bg-mono-900 text-mono-200'
+        : 'text-[11px] p-2.5 rounded border border-mono-700 bg-mono-900 text-white';
+      el.innerText = msg;
+      el.classList.remove('hidden');
+    }
+
+    function hideAuthAlert() {
+      document.getElementById('auth-alert').classList.add('hidden');
+    }
+
+    async function handleAuthSignIn(e) {
+      e.preventDefault();
+      const email = document.getElementById('signin-email').value.trim();
+      const password = document.getElementById('signin-password').value;
+      const btn = document.getElementById('btn-submit-signin');
+
+      btn.innerText = 'AUTHENTICATING...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/auth/signin', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Sign in failed');
+
+        authToken = data.data.access_token;
+        authUser = data.data;
+        localStorage.setItem('voidai_token', authToken);
+        localStorage.setItem('voidai_user', JSON.stringify(authUser));
+
+        updateAuthUI(authUser);
+        closeAuthModal();
+      } catch (err) {
+        showAuthAlert(err.message, true);
+      } finally {
+        btn.innerText = 'AUTHENTICATE →';
+        btn.disabled = false;
+      }
+    }
+
+    async function handleAuthSignUp(e) {
+      e.preventDefault();
+      const fullName = document.getElementById('signup-fullname').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const role = document.getElementById('signup-role').value;
+      const dept = document.getElementById('signup-dept').value;
+      const btn = document.getElementById('btn-submit-signup');
+
+      btn.innerText = 'REGISTERING...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            full_name: fullName,
+            email: email,
+            password: password,
+            role: role,
+            department: dept
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Sign up failed');
+
+        showAuthAlert('Account created successfully! Signing in...', false);
+        
+        // Auto-signin
+        setTimeout(async () => {
+          try {
+            const loginRes = await fetch('/api/auth/signin', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ email, password })
+            });
+            const loginData = await loginRes.json();
+            if (loginRes.ok) {
+              authToken = loginData.data.access_token;
+              authUser = loginData.data;
+              localStorage.setItem('voidai_token', authToken);
+              localStorage.setItem('voidai_user', JSON.stringify(authUser));
+              updateAuthUI(authUser);
+              closeAuthModal();
+            } else {
+              setAuthTab('signin');
+            }
+          } catch(le) {
+            setAuthTab('signin');
+          }
+        }, 800);
+
+      } catch (err) {
+        showAuthAlert(err.message, true);
+      } finally {
+        btn.innerText = 'CREATE ACCOUNT →';
+        btn.disabled = false;
+      }
+    }
+
+    function handleSignOut() {
+      authToken = null;
+      authUser = null;
+      localStorage.removeItem('voidai_token');
+      localStorage.removeItem('voidai_user');
+      updateAuthUI(null);
+    }
 
     async function fetchDocuments() {
       try {
@@ -659,7 +955,8 @@
             query: query,
             user_role: currentRole,
             provider: 'ollama',
-            model: 'llama3:latest'
+            model: 'llama3:latest',
+            user_id: authUser ? authUser.user_id : null
           })
         });
 
@@ -736,12 +1033,18 @@
       formData.append('department', dept);
 
       try {
+        const headers = {};
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
         const res = await fetch('/api/upload', {
           method: 'POST',
+          headers: headers,
           body: formData
         });
         const data = await res.json();
-        alert(`Successfully indexed ${data.filename} (${data.chunks_added} chunks added under ${data.department}).`);
+        if (!res.ok) throw new Error(data.detail || 'Upload failed');
+        alert(`Successfully uploaded to Supabase Storage and indexed ${data.filename} (${data.chunks_added} chunks under ${data.department}).`);
         closeUploadModal();
         fetchDocuments();
       } catch (e) {
