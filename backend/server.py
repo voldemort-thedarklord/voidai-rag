@@ -59,6 +59,8 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:8501",
         "http://127.0.0.1:8501",
+        "https://www.voidai.in",
+        "https://voidai.in",
     ],
     allow_origin_regex=r"https?://.*",
     allow_credentials=True,
