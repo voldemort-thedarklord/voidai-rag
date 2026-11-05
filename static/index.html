@@ -1,77 +1,65 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>voidai // enterprise knowledge engine</title>
-  
-  <!-- Inter & JetBrains Mono for razor-sharp typography -->
+  <title>VOIDAI // Enterprise Knowledge & Document Intelligence</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace']
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
           },
           colors: {
             mono: {
-              50: '#FAFAFA',
-              100: '#F5F5F5',
-              200: '#E5E5E5',
-              300: '#D4D4D4',
-              400: '#A3A3A3',
-              500: '#737373',
-              600: '#525252',
-              700: '#404040',
-              800: '#262626',
-              850: '#1F1F1F',
-              900: '#171717',
+              black: '#000000',
               950: '#0A0A0A',
-              black: '#000000'
+              900: '#141414',
+              850: '#1B1B1B',
+              800: '#222222',
+              700: '#333333',
+              600: '#525252',
+              500: '#737373',
+              400: '#A3A3A3',
+              300: '#D4D4D4',
+              200: '#E5E5E5',
+              100: '#F5F5F5',
+              white: '#FFFFFF',
             }
           }
         }
       }
     }
   </script>
-
   <style>
-    /* Minimalist Scrollbar */
+    /* Custom scrollbars */
     ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
+      width: 5px;
+      height: 5px;
     }
     ::-webkit-scrollbar-track {
-      background: transparent;
+      background: #0A0A0A;
     }
     ::-webkit-scrollbar-thumb {
-      background: #2E2E2E;
+      background: #262626;
       border-radius: 2px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #525252;
+      background: #404040;
     }
-
-    /* Minimalist Citation Highlight: Monochrome border & luminous low-opacity white fill */
     .citation-highlight {
-      background: rgba(255, 255, 255, 0.08);
-      border-left: 2px solid #FFFFFF;
-      padding: 3px 8px;
-      border-radius: 2px;
+      background-color: rgba(255, 255, 255, 0.15);
       color: #FFFFFF;
-      display: inline-block;
-      margin: 4px 0;
-      font-weight: 400;
+      padding: 1px 3px;
+      border-radius: 2px;
+      border-bottom: 1px solid #FFFFFF;
     }
-
-    /* Citation Number Badge: Crisp Black on White Pill */
     .citation-badge {
       display: inline-flex;
       align-items: center;
@@ -106,14 +94,14 @@
       <div class="w-6 h-6 border border-white/20 bg-mono-900 rounded flex items-center justify-center">
         <div class="w-2.5 h-2.5 bg-white rounded-sm"></div>
       </div>
-      <div class="flex items-center space-x-2">
-        <span class="text-xs font-semibold tracking-wider uppercase text-white font-mono">VOIDAI</span>
-        <span class="text-[10px] text-mono-500 font-mono tracking-tight">// intelligence</span>
+      <div class="flex items-center space-x-2 font-mono">
+        <span class="text-xs font-semibold tracking-wider uppercase text-white">VOIDAI</span>
+        <span class="text-[10px] text-mono-500 tracking-tight">// intelligence</span>
       </div>
     </div>
 
     <!-- Center Navigation Tabs (Strictly Minimalist Monochrome) -->
-    <div class="inline-flex p-0.5 bg-mono-950 rounded-lg border border-mono-800">
+    <div class="inline-flex p-0.5 bg-mono-950 rounded-lg border border-mono-800 font-mono">
       <button onclick="switchTab('knowledge')" id="btn-tab-knowledge" class="px-4 py-1 text-xs font-medium rounded-md text-mono-black bg-white shadow-sm transition">
         Knowledge Base
       </button>
@@ -126,7 +114,7 @@
       </button>
     </div>
 
-    <!-- Right System Specs with Minimalist Role Selector & Supabase Auth -->
+    <!-- Right Controls: Role Selector & Authenticated User Status -->
     <div class="flex items-center space-x-3 text-xs font-mono">
       <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-mono-800 bg-mono-950 text-mono-400 text-[11px]">
         <span class="text-mono-500">ROLE:</span>
@@ -140,22 +128,13 @@
         </select>
       </div>
       
-      <!-- Supabase Auth Status Controls -->
-      <div id="auth-logged-out" class="flex items-center space-x-1.5">
-        <button onclick="openAuthModal('signin')" class="px-2.5 py-1 text-[11px] font-mono text-mono-300 hover:text-white bg-mono-900 border border-mono-800 hover:border-mono-600 rounded transition">
-          SIGN IN
-        </button>
-        <button onclick="openAuthModal('signup')" class="px-2.5 py-1 text-[11px] font-mono text-mono-black font-semibold bg-white hover:bg-mono-200 rounded transition">
-          SIGN UP
-        </button>
-      </div>
-
-      <div id="auth-logged-in" class="hidden flex items-center space-x-2">
-        <div class="flex items-center space-x-1 px-2 py-0.5 rounded border border-mono-800 bg-mono-900 text-[11px] text-mono-300">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span id="user-email-display" class="truncate max-w-[130px]">user@acme.com</span>
+      <!-- Authenticated User Display & Logout -->
+      <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-mono-800 bg-mono-900 text-[11px] text-mono-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+          <span id="user-email-display" class="truncate max-w-[140px]">session active</span>
         </div>
-        <button onclick="handleSignOut()" title="Sign Out" class="px-2 py-1 text-[11px] text-mono-400 hover:text-white border border-mono-800 hover:border-mono-600 rounded transition">
+        <button onclick="handleSignOut()" title="Sign Out of Session" class="px-2.5 py-1 text-[11px] font-mono text-mono-400 hover:text-white hover:border-mono-600 border border-mono-800 bg-mono-950 rounded transition">
           LOGOUT
         </button>
       </div>
@@ -181,13 +160,13 @@
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
-          <span class="text-mono-300">voidai.internal // rag-assistant</span>
+          <span class="text-mono-300">voidai // zero-trust enterprise repository</span>
         </div>
 
         <!-- Status -->
         <div class="flex items-center space-x-2 text-[10px] text-mono-500">
           <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
-          <span>SYSTEM READY</span>
+          <span>PROTECTED WORKSPACE</span>
         </div>
       </div>
 
@@ -217,7 +196,7 @@
             <!-- Deselect All / Selection Status -->
             <div class="px-3.5 py-2 flex items-center justify-between text-xs text-mono-400 border-b border-mono-900 bg-mono-950/60">
               <label class="flex items-center space-x-2 cursor-pointer select-none hover:text-white">
-                <input type="checkbox" id="select-all-cb" checked onchange="toggleSelectAll(this)" class="rounded bg-mono-900 border-mono-700 text-white focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-white">
+                <input type="checkbox" id="select-all-cb" onchange="toggleSelectAll(this)" class="rounded bg-mono-900 border-mono-700 text-white focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-white">
                 <span class="text-[11px] font-mono">SELECT ALL</span>
               </label>
               <button onclick="fetchDocuments()" title="Sync Collection" class="hover:text-white transition">
@@ -227,7 +206,7 @@
 
             <!-- Scrollable Document List -->
             <div id="doc-list-container" class="flex-1 overflow-y-auto p-2 space-y-1">
-              <div class="text-xs text-mono-500 p-4 text-center font-mono">Loading documents...</div>
+              <div class="text-xs text-mono-500 p-4 text-center font-mono">Loading repository...</div>
             </div>
           </div>
         </aside>
@@ -240,36 +219,11 @@
           <!-- Conversation Messages Thread -->
           <div id="chat-messages-container" class="flex-1 overflow-y-auto p-5 space-y-4">
             
-            <!-- Default Assistant Greeting -->
+            <!-- Authentic Assistant Initial Greeting (No Fake QA Data) -->
             <div class="flex items-start space-x-2.5 max-w-[85%]">
-              <div class="bg-mono-900 border border-mono-800 text-mono-300 text-xs px-4 py-3 rounded-xl rounded-tl-sm shadow-sm leading-relaxed">
-                voidai enterprise document assistant online. Ask questions regarding company policies, technical specifications, or compliance standards.
-              </div>
-            </div>
-
-            <!-- Example User Question -->
-            <div class="flex justify-end">
-              <div class="bg-white text-mono-black text-xs font-medium px-4 py-2.5 rounded-xl rounded-tr-sm shadow-sm max-w-[80%] leading-relaxed">
-                how many paid vacation days do I have for the first year?
-              </div>
-            </div>
-
-            <!-- Example Assistant Answer with Citations -->
-            <div class="flex flex-col space-y-2 max-w-[92%]">
-              <div class="bg-mono-900 border border-mono-800 text-mono-200 text-xs px-4 py-3.5 rounded-xl rounded-tl-sm shadow-sm leading-relaxed space-y-2.5">
-                <p>Based on the employee handbook, during your first year of employment, you will earn <strong class="text-white font-semibold">10 days (2 weeks)</strong> of paid vacation.</p>
-                <p class="text-mono-300">However, you will not accrue vacation benefits during the initial 90 days of employment. The 10 vacation days are earned during the remaining nine months of your first year <span class="citation-badge" onclick="showCitationDoc('HR_Leave_and_Attendance_Policy.pdf', 2, 'first 90 days of employment')">1</span>.</p>
-              </div>
-
-              <!-- Action Bar (Monochrome Outline) -->
-              <div class="flex items-center space-x-3 text-mono-500 text-[11px] pl-2 pt-0.5 font-mono">
-                <button class="hover:text-white transition flex items-center gap-1">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                  <span>Helpful</span>
-                </button>
-                <button class="hover:text-white transition" onclick="copyLastResponse()">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                </button>
+              <div class="bg-mono-900 border border-mono-800 text-mono-300 text-xs px-4 py-3 rounded-xl rounded-tl-sm shadow-sm leading-relaxed font-mono">
+                <div class="text-white font-semibold text-[11px] mb-1">// VOIDAI SYSTEM ONLINE</div>
+                <div class="text-mono-400 font-sans text-xs">Internal knowledge assistant active. Ingest company records (.pdf, .docx, .txt) or ask a question across your indexed repository.</div>
               </div>
             </div>
 
@@ -282,17 +236,17 @@
                 type="text" 
                 id="chat-input"
                 placeholder="Ask a question about internal policies or technical standards..." 
-                class="w-full bg-transparent text-xs text-white placeholder-mono-500 focus:outline-none pr-32"
+                class="w-full bg-transparent text-xs text-white placeholder-mono-500 focus:outline-none pr-32 font-sans"
                 onkeydown="if(event.key === 'Enter') handleSendMessage()"
               >
               
-              <div class="absolute right-2 flex items-center space-x-2">
+              <div class="absolute right-2 flex items-center space-x-2 font-mono">
                 <!-- Sources Filter Indicator -->
-                <div class="flex items-center space-x-1 px-2 py-0.5 bg-mono-800 border border-mono-700 rounded text-[10px] text-mono-300 font-mono select-none">
-                  <span id="active-sources-label">ALL SOURCES</span>
+                <div class="flex items-center space-x-1 px-2 py-0.5 bg-mono-800 border border-mono-700 rounded text-[10px] text-mono-300 select-none">
+                  <span id="active-sources-label">0 SOURCES</span>
                 </div>
 
-                <!-- Submit Button (Minimalist Monochrome White Pill) -->
+                <!-- Submit Button -->
                 <button 
                   onclick="handleSendMessage()"
                   id="btn-send"
@@ -330,8 +284,8 @@
               <button onclick="changeDocPage(-1)" class="p-1 hover:text-white rounded hover:bg-mono-900 transition">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"></path></svg>
               </button>
-              <input type="text" id="doc-current-page" value="2" class="w-7 h-5 bg-mono-900 border border-mono-700 text-center text-[11px] text-white rounded font-mono focus:outline-none" onchange="jumpToPage(this.value)">
-              <span class="text-mono-500 text-[11px]">/ <span id="doc-total-pages">3</span></span>
+              <input type="text" id="doc-current-page" value="1" class="w-7 h-5 bg-mono-900 border border-mono-700 text-center text-[11px] text-white rounded font-mono focus:outline-none" onchange="jumpToPage(this.value)">
+              <span class="text-mono-500 text-[11px]">/ <span id="doc-total-pages">1</span></span>
               <button onclick="changeDocPage(1)" class="p-1 hover:text-white rounded hover:bg-mono-900 transition">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
               </button>
@@ -345,42 +299,34 @@
             </div>
           </div>
 
-          <!-- Document Paper Sheet View (Monochrome Minimalist) -->
+          <!-- Document Paper Sheet View (No Fake Hardcoded Text) -->
           <div id="doc-paper-scroll" class="flex-1 overflow-y-auto p-4 flex justify-center bg-mono-black">
-            <div id="doc-paper" class="w-full max-w-[440px] bg-mono-950 border border-mono-800 rounded p-6 text-[12px] text-mono-300 leading-relaxed space-y-4 transition-transform duration-150 origin-top">
+            
+            <!-- Standby empty state when no document is selected -->
+            <div id="doc-viewer-empty" class="h-full flex flex-col items-center justify-center p-8 text-center space-y-3 my-auto">
+              <div class="w-8 h-8 rounded border border-mono-800 bg-mono-900 flex items-center justify-center text-mono-500 font-mono text-xs">∅</div>
+              <div class="text-xs font-mono text-mono-400 uppercase tracking-wider">No Document Selected</div>
+              <p class="text-[11px] text-mono-600 max-w-xs font-sans leading-relaxed">
+                Select a document from the index repository or click a citation in chat to inspect verified source pages.
+              </p>
+            </div>
+
+            <!-- Real document content container (hidden until loaded) -->
+            <div id="doc-paper" class="hidden w-full max-w-[440px] bg-mono-950 border border-mono-800 rounded p-6 text-[12px] text-mono-300 leading-relaxed space-y-4 transition-transform duration-150 origin-top">
               
               <!-- Document Filename Header -->
               <div class="pb-2.5 border-b border-mono-800 text-[10px] font-mono tracking-widest text-mono-400 uppercase flex items-center justify-between">
-                <span id="doc-viewer-filename">HR_Leave_and_Attendance_Policy.pdf</span>
+                <span id="doc-viewer-filename">--</span>
                 <span class="text-mono-600">PAGE VERIFIED</span>
               </div>
 
-              <!-- Page Content -->
+              <!-- Real Page Content -->
               <div id="doc-viewer-content" class="space-y-3 font-sans">
-                <p>
-                  <span class="citation-highlight">
-                    During the first 90 days of employment full- and part-time employees will not earn Vacation benefits. During the remaining nine months of first year employment, a full-time employee will earn two weeks (10 days) of paid Vacation.
-                  </span>
-                </p>
-                
-                <p class="text-mono-400">
-                  Full-time employees will continue to earn two weeks (10 days) of Vacation during the second year of employment. In their third year of employment, full-time employees will earn three weeks (15 days) of Vacation. During the fourth year and thereafter, full-time employees will earn four weeks (20 days) of Vacation per year. Temporary employees are ineligible for Vacation benefits.
-                </p>
-
-                <p class="text-mono-400">
-                  Vacation benefits are prorated accordingly for Part-Time employees. Use of Vacation is subject to approval by the supervisor and Executive Director and must be requested in hourly increments, using the appropriate leave request form.
-                </p>
-
-                <h4 class="font-mono font-semibold text-white text-xs pt-2">C. Sick Leave</h4>
-
-                <p class="text-mono-400">
-                  Sick leave benefits are earned on a prorated basis of one day (7 hours) per month for full-time employees beginning at first day of employment. Part-time employees receive prorated sick leave benefits.
-                </p>
               </div>
 
               <!-- Page Footer -->
               <div class="pt-4 text-center text-[10px] font-mono text-mono-600 border-t border-mono-900">
-                PAGE <span id="doc-footer-page">2</span> OF <span id="doc-footer-total">3</span>
+                PAGE <span id="doc-footer-page">1</span> OF <span id="doc-footer-total">1</span>
               </div>
 
             </div>
@@ -401,9 +347,10 @@
     <div class="text-mono-400 text-center">
       VOIDAI // DENSE SEMANTIC RETRIEVAL // GROUNDED REASONING WITH EXACT PAGE CITATIONS
     </div>
-    <div class="flex items-center space-x-3 text-mono-400">
+    <div class="flex items-center space-x-4 text-mono-400">
+      <span>CHUNKS: <strong id="stat-chunks" class="text-white">0</strong></span>
+      <span>STORAGE: <strong id="stat-storage" class="text-white">0.00 MB</strong></span>
       <span>TOP-K: 4</span>
-      <span>THRESHOLD: 0.25</span>
     </div>
   </footer>
 
@@ -461,28 +408,28 @@
       <div class="space-y-4 overflow-y-auto flex-1 pr-1 text-xs">
         <p class="text-mono-400">Automated verification testing across Factual QA, RBAC permission barriers, and Hallucination rejection.</p>
         
-        <!-- Scorecard Cards (Monochrome Minimalist) -->
+        <!-- Scorecard Cards (No Fake Data: Real Metrics Computed On Demand) -->
         <div id="eval-scorecard" class="grid grid-cols-4 gap-2">
           <div class="bg-mono-900 p-3 rounded border border-mono-800 text-center">
             <span class="text-[10px] text-mono-500 block uppercase">Precision</span>
-            <span id="score-accuracy" class="text-base font-bold text-white">100%</span>
+            <span id="score-accuracy" class="text-base font-bold text-white">--</span>
           </div>
           <div class="bg-mono-900 p-3 rounded border border-mono-800 text-center">
             <span class="text-[10px] text-mono-500 block uppercase">Test Pass</span>
-            <span id="score-passed" class="text-base font-bold text-white">8 / 8</span>
+            <span id="score-passed" class="text-base font-bold text-white">--</span>
           </div>
           <div class="bg-mono-900 p-3 rounded border border-mono-800 text-center">
             <span class="text-[10px] text-mono-500 block uppercase">Latency</span>
-            <span id="score-retrieval" class="text-base font-bold text-white">142 ms</span>
+            <span id="score-retrieval" class="text-base font-bold text-white">--</span>
           </div>
           <div class="bg-mono-900 p-3 rounded border border-mono-800 text-center">
             <span class="text-[10px] text-mono-500 block uppercase">Security</span>
-            <span id="score-rbac" class="text-base font-bold text-white">100%</span>
+            <span id="score-rbac" class="text-base font-bold text-white">--</span>
           </div>
         </div>
 
-        <div id="eval-table-container" class="border border-mono-800 rounded overflow-hidden text-[11px]">
-          <!-- Table filled dynamically -->
+        <div id="eval-table-container" class="border border-mono-800 rounded overflow-hidden text-[11px] p-6 text-center text-mono-500">
+          No benchmark executed. Click 'RUN BENCHMARK SUITE' below to evaluate performance against indexed documents.
         </div>
       </div>
 
@@ -495,311 +442,101 @@
     </div>
   </div>
 
-  <!-- ============================================== -->
-  <!-- MODAL 3: AUTHENTICATION MODAL (SUPABASE AUTH)  -->
-  <!-- ============================================== -->
-  <div id="auth-modal" class="fixed inset-0 bg-black/85 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-mono-950 border border-mono-800 rounded-lg p-6 w-full max-w-sm shadow-2xl space-y-4 font-mono">
-      <div class="flex justify-between items-center border-b border-mono-800 pb-3">
-        <h3 class="text-xs font-semibold text-white tracking-wider uppercase flex items-center gap-2">
-          <span>VOIDAI // IAM AUTH</span>
-        </h3>
-        <button onclick="closeAuthModal()" class="text-mono-500 hover:text-white">✕</button>
-      </div>
-
-      <!-- Tab Switcher (Sign In vs Sign Up) -->
-      <div class="grid grid-cols-2 p-0.5 bg-mono-900 rounded border border-mono-800 text-xs">
-        <button onclick="setAuthTab('signin')" id="btn-auth-tab-signin" class="py-1 text-center font-semibold rounded bg-white text-mono-black transition">
-          SIGN IN
-        </button>
-        <button onclick="setAuthTab('signup')" id="btn-auth-tab-signup" class="py-1 text-center text-mono-400 hover:text-white rounded transition">
-          SIGN UP
-        </button>
-      </div>
-
-      <!-- Feedback / Alert Message -->
-      <div id="auth-alert" class="hidden text-[11px] p-2.5 rounded border"></div>
-
-      <!-- SIGN IN FORM -->
-      <form id="form-signin" onsubmit="handleAuthSignIn(event)" class="space-y-3 text-xs">
-        <div>
-          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Corporate Email</label>
-          <input type="email" id="signin-email" required placeholder="user@company.com" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
-        </div>
-        <div>
-          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Password</label>
-          <input type="password" id="signin-password" required placeholder="••••••••••••" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
-        </div>
-        <button type="submit" id="btn-submit-signin" class="w-full py-2 bg-white hover:bg-mono-200 text-black text-xs font-semibold rounded transition mt-2">
-          AUTHENTICATE →
-        </button>
-      </form>
-
-      <!-- SIGN UP FORM -->
-      <form id="form-signup" onsubmit="handleAuthSignUp(event)" class="space-y-3 text-xs hidden">
-        <div>
-          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Full Name</label>
-          <input type="text" id="signup-fullname" required placeholder="Jane Doe" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
-        </div>
-        <div>
-          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Corporate Email</label>
-          <input type="email" id="signup-email" required placeholder="jane@company.com" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
-        </div>
-        <div>
-          <label class="block text-mono-400 mb-1 text-[10px] uppercase">Password</label>
-          <input type="password" id="signup-password" required minlength="6" placeholder="••••••••••••" class="w-full bg-mono-900 border border-mono-800 rounded p-2 text-white placeholder-mono-600 focus:outline-none focus:border-white transition">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-mono-400 mb-1 text-[10px] uppercase">RBAC Role</label>
-            <select id="signup-role" class="w-full bg-mono-900 border border-mono-800 rounded p-1.5 text-xs text-white">
-              <option value="Admin">Admin</option>
-              <option value="Executive">Executive</option>
-              <option value="HR Manager">HR Manager</option>
-              <option value="Software Engineer">Engineer</option>
-              <option value="Finance Analyst">Finance</option>
-              <option value="General Employee">General</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-mono-400 mb-1 text-[10px] uppercase">Dept</label>
-            <select id="signup-dept" class="w-full bg-mono-900 border border-mono-800 rounded p-1.5 text-xs text-white">
-              <option value="General">General</option>
-              <option value="HR">HR</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Finance">Finance</option>
-              <option value="Executive">Executive</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" id="btn-submit-signup" class="w-full py-2 bg-white hover:bg-mono-200 text-black text-xs font-semibold rounded transition mt-2">
-          CREATE ACCOUNT →
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- JAVASCRIPT LOGIC -->
   <script>
-    let currentZoom = 100;
-    let activeDocName = 'HR_Leave_and_Attendance_Policy.pdf';
-    let activePage = 2;
-    let totalPages = 3;
-    let currentRole = 'Admin';
+    // State management
     let availableDocs = [];
-    
-    // Supabase Auth State
-    let authToken = localStorage.getItem('voidai_token') || null;
-    let authUser = JSON.parse(localStorage.getItem('voidai_user') || 'null');
+    let currentRole = 'Admin';
+    let activeDocName = '';
+    let activePage = 1;
+    let totalPages = 1;
+    let currentZoom = 100;
+    let authToken = null;
+    let authUser = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
-      checkAuthSession();
-      fetchDocuments();
-    });
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? decodeURIComponent(match[2]) : null;
+    }
 
-    // ==========================================
-    // SUPABASE AUTHENTICATION
-    // ==========================================
+    function deleteCookie(name) {
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    }
+
+    // Helper for all authenticated fetch calls
+    async function apiFetch(url, options = {}) {
+      options.headers = options.headers || {};
+      if (authToken) {
+        options.headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      const res = await fetch(url, options);
+      if (res.status === 401) {
+        // Redirect to login if unauthorized
+        handleSignOut();
+        return null;
+      }
+      return res;
+    }
+
+    // AUTH GUARD: Verify active session on start
     async function checkAuthSession() {
+      authToken = localStorage.getItem('voidai_token') || getCookie('voidai_token');
       if (!authToken) {
-        updateAuthUI(null);
+        window.location.replace('/login');
         return;
       }
+
       try {
         const res = await fetch('/api/auth/me', {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        if (res.ok) {
-          const data = await res.json();
-          authUser = data.user;
-          localStorage.setItem('voidai_user', JSON.stringify(authUser));
-          updateAuthUI(authUser);
-        } else {
-          // Token expired
-          handleSignOut();
+        if (!res.ok) {
+          throw new Error('Unauthorized');
         }
-      } catch (e) {
-        console.error('Session check error:', e);
+        const data = await res.json();
+        authUser = data.user;
+        updateAuthUI(authUser);
+        fetchDocuments();
+        loadChatHistory();
+      } catch (err) {
+        console.error('Auth verification failed:', err);
+        handleSignOut();
       }
     }
 
     function updateAuthUI(user) {
-      const loggedOutDiv = document.getElementById('auth-logged-out');
-      const loggedInDiv = document.getElementById('auth-logged-in');
-      const emailDisplay = document.getElementById('user-email-display');
-      const roleSelect = document.getElementById('user-role-select');
-
-      if (user) {
-        loggedOutDiv.classList.add('hidden');
-        loggedInDiv.classList.remove('hidden');
-        emailDisplay.innerText = user.email || 'user';
-        if (user.role && roleSelect) {
-          roleSelect.value = user.role;
-          currentRole = user.role;
-        }
-      } else {
-        loggedOutDiv.classList.remove('hidden');
-        loggedInDiv.classList.add('hidden');
+      if (!user) {
+        window.location.replace('/login');
+        return;
+      }
+      document.getElementById('user-email-display').innerText = user.email || 'user';
+      if (user.role) {
+        currentRole = user.role;
+        const select = document.getElementById('user-role-select');
+        if (select) select.value = user.role;
       }
     }
 
-    function openAuthModal(tab = 'signin') {
-      document.getElementById('auth-modal').classList.remove('hidden');
-      setAuthTab(tab);
-      hideAuthAlert();
-    }
-
-    function closeAuthModal() {
-      document.getElementById('auth-modal').classList.add('hidden');
-    }
-
-    function setAuthTab(tab) {
-      const btnIn = document.getElementById('btn-auth-tab-signin');
-      const btnUp = document.getElementById('btn-auth-tab-signup');
-      const formIn = document.getElementById('form-signin');
-      const formUp = document.getElementById('form-signup');
-
-      if (tab === 'signin') {
-        btnIn.className = 'py-1 text-center font-semibold rounded bg-white text-mono-black transition';
-        btnUp.className = 'py-1 text-center text-mono-400 hover:text-white rounded transition';
-        formIn.classList.remove('hidden');
-        formUp.classList.add('hidden');
-      } else {
-        btnUp.className = 'py-1 text-center font-semibold rounded bg-white text-mono-black transition';
-        btnIn.className = 'py-1 text-center text-mono-400 hover:text-white rounded transition';
-        formUp.classList.remove('hidden');
-        formIn.classList.add('hidden');
-      }
-      hideAuthAlert();
-    }
-
-    function showAuthAlert(msg, isError = false) {
-      const el = document.getElementById('auth-alert');
-      el.className = isError 
-        ? 'text-[11px] p-2.5 rounded border border-mono-700 bg-mono-900 text-mono-200'
-        : 'text-[11px] p-2.5 rounded border border-mono-700 bg-mono-900 text-white';
-      el.innerText = msg;
-      el.classList.remove('hidden');
-    }
-
-    function hideAuthAlert() {
-      document.getElementById('auth-alert').classList.add('hidden');
-    }
-
-    async function handleAuthSignIn(e) {
-      e.preventDefault();
-      const email = document.getElementById('signin-email').value.trim();
-      const password = document.getElementById('signin-password').value;
-      const btn = document.getElementById('btn-submit-signin');
-
-      btn.innerText = 'AUTHENTICATING...';
-      btn.disabled = true;
-
+    async function handleSignOut() {
       try {
-        const res = await fetch('/api/auth/signin', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Sign in failed');
-
-        authToken = data.data.access_token;
-        authUser = data.data;
-        localStorage.setItem('voidai_token', authToken);
-        localStorage.setItem('voidai_user', JSON.stringify(authUser));
-
-        updateAuthUI(authUser);
-        closeAuthModal();
-      } catch (err) {
-        showAuthAlert(err.message, true);
-      } finally {
-        btn.innerText = 'AUTHENTICATE →';
-        btn.disabled = false;
-      }
-    }
-
-    async function handleAuthSignUp(e) {
-      e.preventDefault();
-      const fullName = document.getElementById('signup-fullname').value.trim();
-      const email = document.getElementById('signup-email').value.trim();
-      const password = document.getElementById('signup-password').value;
-      const role = document.getElementById('signup-role').value;
-      const dept = document.getElementById('signup-dept').value;
-      const btn = document.getElementById('btn-submit-signup');
-
-      btn.innerText = 'REGISTERING...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            full_name: fullName,
-            email: email,
-            password: password,
-            role: role,
-            department: dept
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Sign up failed');
-
-        showAuthAlert('Account created successfully! Signing in...', false);
-        
-        // Auto-signin
-        setTimeout(async () => {
-          try {
-            const loginRes = await fetch('/api/auth/signin', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ email, password })
-            });
-            const loginData = await loginRes.json();
-            if (loginRes.ok) {
-              authToken = loginData.data.access_token;
-              authUser = loginData.data;
-              localStorage.setItem('voidai_token', authToken);
-              localStorage.setItem('voidai_user', JSON.stringify(authUser));
-              updateAuthUI(authUser);
-              closeAuthModal();
-            } else {
-              setAuthTab('signin');
-            }
-          } catch(le) {
-            setAuthTab('signin');
-          }
-        }, 800);
-
-      } catch (err) {
-        showAuthAlert(err.message, true);
-      } finally {
-        btn.innerText = 'CREATE ACCOUNT →';
-        btn.disabled = false;
-      }
-    }
-
-    function handleSignOut() {
+        await fetch('/api/auth/signout', { method: 'POST' });
+      } catch (e) {}
       authToken = null;
       authUser = null;
       localStorage.removeItem('voidai_token');
       localStorage.removeItem('voidai_user');
-      updateAuthUI(null);
+      deleteCookie('voidai_token');
+      window.location.replace('/login');
     }
 
     async function fetchDocuments() {
       try {
-        const res = await fetch('/api/documents');
+        const res = await apiFetch('/api/documents');
+        if (!res) return;
         const data = await res.json();
         availableDocs = data.documents || [];
         
-        if (document.getElementById('stat-chunks')) {
-          document.getElementById('stat-chunks').innerText = data.total_chunks || 42;
-        }
-        if (document.getElementById('stat-storage')) {
-          document.getElementById('stat-storage').innerText = (data.storage_mb || 1.09) + ' MB';
-        }
+        document.getElementById('stat-chunks').innerText = data.total_chunks || 0;
+        document.getElementById('stat-storage').innerText = (data.storage_mb || 0).toFixed(2) + ' MB';
 
         renderDocList();
       } catch (e) {
@@ -809,10 +546,21 @@
 
     function renderDocList() {
       const container = document.getElementById('doc-list-container');
-      if (!availableDocs.length) {
-        container.innerHTML = '<div class="text-xs text-mono-500 p-4 text-center font-mono">No documents indexed.</div>';
+      if (!availableDocs || availableDocs.length === 0) {
+        container.innerHTML = `
+          <div class="text-xs text-mono-500 p-6 text-center font-mono space-y-2">
+            <div class="text-mono-600 text-lg font-bold">0</div>
+            <div class="text-mono-400">NO DOCUMENTS INDEXED</div>
+            <div class="text-[10px] text-mono-600">Click '+ Ingest' above to upload documents (.pdf, .docx, .txt).</div>
+          </div>
+        `;
+        document.getElementById('select-all-cb').checked = false;
+        document.getElementById('active-sources-label').innerText = '0 SOURCES';
         return;
       }
+
+      document.getElementById('active-sources-label').innerText = `${availableDocs.length} SOURCES`;
+      document.getElementById('select-all-cb').checked = true;
 
       container.innerHTML = availableDocs.map(doc => {
         const ext = doc.source.split('.').pop().toUpperCase();
@@ -823,31 +571,93 @@
         return `
           <div class="flex items-center justify-between px-2.5 py-1.5 rounded hover:bg-mono-900 cursor-pointer group transition select-none border border-transparent hover:border-mono-800" onclick="loadDocInViewer('${doc.source}', 1)">
             <label class="flex items-center space-x-2 truncate cursor-pointer" onclick="event.stopPropagation()">
-              <input type="checkbox" checked class="doc-cb rounded bg-mono-900 border-mono-700 text-white focus:ring-0 w-3 h-3 accent-white">
+              <input type="checkbox" checked class="doc-cb rounded bg-mono-900 border-mono-700 text-white focus:ring-0 w-3 h-3 accent-white" onchange="updateSourcesCount()">
               <span class="text-[10px] font-mono text-mono-500 w-7 shrink-0">${ext}</span>
               <span class="text-xs text-mono-300 truncate max-w-[145px] group-hover:text-white" title="${doc.source}">${doc.source}</span>
             </label>
-            <div class="shrink-0">
+            <div class="flex items-center space-x-1 shrink-0">
               ${deptTag}
+              <button onclick="event.stopPropagation(); deleteDoc('${doc.source}')" title="Delete Document" class="opacity-0 group-hover:opacity-100 p-1 text-mono-500 hover:text-white transition">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
             </div>
           </div>
         `;
       }).join('');
     }
 
+    function updateSourcesCount() {
+      const checked = document.querySelectorAll('.doc-cb:checked').length;
+      document.getElementById('active-sources-label').innerText = `${checked} SOURCES`;
+    }
+
+    async function deleteDoc(filename) {
+      if (!confirm(`Delete ${filename} from database and vector index?`)) return;
+      try {
+        const res = await apiFetch(`/api/document/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+        if (!res) return;
+        fetchDocuments();
+        if (activeDocName === filename) {
+          clearDocView();
+        }
+      } catch (e) {
+        alert('Delete failed: ' + e.message);
+      }
+    }
+
     function changeRole(role) {
       currentRole = role;
-      if (document.getElementById('role-badge')) {
-        document.getElementById('role-badge').innerText = role;
-      }
-      if (document.getElementById('header-role-label')) {
-        document.getElementById('header-role-label').innerText = role.toUpperCase();
-      }
     }
 
     function toggleSelectAll(masterCb) {
       document.querySelectorAll('.doc-cb').forEach(cb => cb.checked = masterCb.checked);
-      document.getElementById('active-sources-label').innerText = masterCb.checked ? 'ALL SOURCES' : 'NONE';
+      updateSourcesCount();
+    }
+
+    // Load authentic past chat history
+    async function loadChatHistory() {
+      try {
+        const res = await apiFetch('/api/chat/history');
+        if (!res) return;
+        const data = await res.json();
+        const history = data.history || [];
+        if (!history.length) return;
+
+        const container = document.getElementById('chat-messages-container');
+        for (const item of history) {
+          // Render user query
+          const userBubble = document.createElement('div');
+          userBubble.className = 'flex justify-end';
+          userBubble.innerHTML = `
+            <div class="bg-white text-mono-black text-xs font-medium px-4 py-2.5 rounded-xl rounded-tr-sm shadow-sm max-w-[80%] leading-relaxed font-sans">
+              ${escapeHtml(item.query)}
+            </div>
+          `;
+          container.appendChild(userBubble);
+
+          // Render assistant response
+          let citationBadgesHtml = '';
+          const citations = item.citations || [];
+          if (citations.length > 0) {
+            citationBadgesHtml = citations.map((c, i) => {
+              const snippetPhrase = (c.excerpt_snippet || '').slice(0, 35);
+              return `<span class="citation-badge" onclick="showCitationDoc('${c.source}', ${c.page}, '${escapeHtml(snippetPhrase)}')">${i + 1}</span>`;
+            }).join(' ');
+          }
+
+          const assistantBubble = document.createElement('div');
+          assistantBubble.className = 'flex flex-col space-y-2 max-w-[92%]';
+          assistantBubble.innerHTML = `
+            <div class="bg-mono-900 border border-mono-800 text-mono-200 text-xs px-4 py-3.5 rounded-xl rounded-tl-sm shadow-sm leading-relaxed space-y-2">
+              <div class="font-sans">${formatMarkdown(item.answer)} ${citationBadgesHtml}</div>
+            </div>
+          `;
+          container.appendChild(assistantBubble);
+        }
+        container.scrollTop = container.scrollHeight;
+      } catch (e) {
+        console.error('Failed to load chat history:', e);
+      }
     }
 
     async function loadDocInViewer(filename, page = 1, highlightPhrase = '') {
@@ -858,7 +668,8 @@
       document.getElementById('doc-footer-page').innerText = page;
 
       try {
-        const res = await fetch(`/api/document/${encodeURIComponent(filename)}/page/${page}`);
+        const res = await apiFetch(`/api/document/${encodeURIComponent(filename)}/page/${page}`);
+        if (!res) return;
         if (!res.ok) throw new Error('Page not found');
         const data = await res.json();
         
@@ -867,7 +678,7 @@
         document.getElementById('doc-footer-total').innerText = totalPages;
 
         let contentHtml = '';
-        const paragraphs = data.text.split('\n\n');
+        const paragraphs = (data.text || '').split('\n\n');
 
         contentHtml = paragraphs.map(para => {
           let cleanPara = escapeHtml(para.trim());
@@ -878,10 +689,19 @@
           return `<p class="text-mono-300 leading-relaxed font-sans">${cleanPara}</p>`;
         }).join('');
 
+        document.getElementById('doc-viewer-empty').classList.add('hidden');
+        document.getElementById('doc-paper').classList.remove('hidden');
         document.getElementById('doc-viewer-content').innerHTML = contentHtml || '<p class="text-mono-500 font-mono">Empty page content</p>';
       } catch (e) {
         console.error('Error loading doc page:', e);
       }
+    }
+
+    function clearDocView() {
+      activeDocName = '';
+      document.getElementById('doc-viewer-filename').innerText = '--';
+      document.getElementById('doc-viewer-empty').classList.remove('hidden');
+      document.getElementById('doc-paper').classList.add('hidden');
     }
 
     function showCitationDoc(filename, page, phrase) {
@@ -912,7 +732,9 @@
     }
 
     function clearDocHighlight() {
-      loadDocInViewer(activeDocName, activePage);
+      if (activeDocName) {
+        loadDocInViewer(activeDocName, activePage);
+      }
     }
 
     async function handleSendMessage() {
@@ -922,11 +744,11 @@
 
       const container = document.getElementById('chat-messages-container');
 
-      // Append User Message (White on Black)
+      // Append User Message
       const userBubble = document.createElement('div');
       userBubble.className = 'flex justify-end';
       userBubble.innerHTML = `
-        <div class="bg-white text-mono-black text-xs font-medium px-4 py-2.5 rounded-xl rounded-tr-sm shadow-sm max-w-[80%] leading-relaxed">
+        <div class="bg-white text-mono-black text-xs font-medium px-4 py-2.5 rounded-xl rounded-tr-sm shadow-sm max-w-[80%] leading-relaxed font-sans">
           ${escapeHtml(query)}
         </div>
       `;
@@ -941,24 +763,24 @@
       loadingBubble.innerHTML = `
         <div class="bg-mono-900 border border-mono-800 text-mono-400 text-xs px-4 py-3 rounded-xl rounded-tl-sm flex items-center space-x-2 font-mono">
           <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-          <span>Searching vector space & synthesizing response...</span>
+          <span>Searching vector space & synthesizing grounded response...</span>
         </div>
       `;
       container.appendChild(loadingBubble);
       container.scrollTop = container.scrollHeight;
 
       try {
-        const res = await fetch('/api/chat', {
+        const res = await apiFetch('/api/chat', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
             query: query,
             user_role: currentRole,
             provider: 'ollama',
-            model: 'llama3:latest',
-            user_id: authUser ? authUser.user_id : null
+            model: 'llama3:latest'
           })
         });
+        if (!res) return;
 
         const data = await res.json();
         loadingBubble.remove();
@@ -978,11 +800,11 @@
         assistantBubble.className = 'flex flex-col space-y-2 max-w-[92%]';
         assistantBubble.innerHTML = `
           <div class="bg-mono-900 border border-mono-800 text-mono-200 text-xs px-4 py-3.5 rounded-xl rounded-tl-sm shadow-sm leading-relaxed space-y-2">
-            <div>${formatMarkdown(answerText)} ${citationBadgesHtml}</div>
+            <div class="font-sans">${formatMarkdown(answerText)} ${citationBadgesHtml}</div>
             ${data.metrics ? `
             <div class="text-[10px] text-mono-500 pt-2 border-t border-mono-800 flex items-center justify-between font-mono">
               <span>LATENCY: ${data.metrics.total_latency_ms} ms</span>
-              <span>ACCESS: ${data.metrics.user_role.toUpperCase()}</span>
+              <span>ROLE: ${(data.metrics.user_role || currentRole).toUpperCase()}</span>
             </div>` : ''}
           </div>
           <div class="flex items-center space-x-3 text-mono-500 text-[11px] pl-2 font-mono">
@@ -1033,15 +855,11 @@
       formData.append('department', dept);
 
       try {
-        const headers = {};
-        if (authToken) {
-          headers['Authorization'] = `Bearer ${authToken}`;
-        }
-        const res = await fetch('/api/upload', {
+        const res = await apiFetch('/api/upload', {
           method: 'POST',
-          headers: headers,
           body: formData
         });
+        if (!res) return;
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Upload failed');
         alert(`Successfully uploaded to Supabase Storage and indexed ${data.filename} (${data.chunks_added} chunks under ${data.department}).`);
@@ -1069,10 +887,11 @@
       const status = document.getElementById('eval-status-msg');
       btn.innerText = 'TESTING...';
       btn.disabled = true;
-      status.innerText = 'Running benchmark test suite...';
+      status.innerText = 'Running benchmark suite against indexed repository...';
 
       try {
-        const res = await fetch('/api/eval');
+        const res = await apiFetch('/api/eval');
+        if (!res) return;
         const data = await res.json();
         const sc = data.scorecard;
 
@@ -1106,7 +925,7 @@
           </table>
         `;
         document.getElementById('eval-table-container').innerHTML = tableHtml;
-        status.innerText = 'Benchmark complete. 100% metrics verified.';
+        status.innerText = 'Benchmark complete. Real metrics recorded.';
       } catch (e) {
         status.innerText = 'Error: ' + e.message;
       } finally {
@@ -1115,12 +934,8 @@
       }
     }
 
-    function toggleSettingsModal() {
-      alert('voidai Configuration:\n- Architecture: Dense Semantic RAG\n- Vector Database: ChromaDB HNSW (Cosine metric)\n- Embeddings: all-MiniLM-L6-v2 (384-dim ONNX)\n- Generation Engine: Local Ollama (llama3:latest)\n- Server Framework: FastAPI / Uvicorn');
-    }
-
     function toggleDocSearch() {
-      const q = prompt('Search index documents:');
+      const q = prompt('Search repository documents:');
       if (q !== null) {
         const items = document.querySelectorAll('#doc-list-container > div');
         items.forEach(el => {
@@ -1130,14 +945,6 @@
             el.style.display = 'none';
           }
         });
-      }
-    }
-
-    function copyLastResponse() {
-      const bubbles = document.querySelectorAll('#chat-messages-container div');
-      if (bubbles.length > 0) {
-        navigator.clipboard.writeText(bubbles[bubbles.length - 1].innerText);
-        alert('Copied to clipboard.');
       }
     }
 
@@ -1157,6 +964,9 @@
     function escapeRegex(string) {
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
+
+    // Initialize session check on load
+    checkAuthSession();
   </script>
 </body>
 </html>

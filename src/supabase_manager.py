@@ -270,3 +270,17 @@ class SupabaseManager:
             }).execute()
         except Exception as e:
             print(f"[SupabaseManager] Error saving chat message: {e}")
+
+    def get_chat_history(self, user_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+        """Retrieve authentic conversation history for user from Supabase."""
+        if not self.client:
+            return []
+        try:
+            query = self.client.table("voidai_chat_history").select("*").order("created_at", desc=False)
+            if user_id:
+                query = query.eq("user_id", user_id)
+            res = query.limit(limit).execute()
+            return res.data or []
+        except Exception as e:
+            print(f"[SupabaseManager] Error getting chat history: {e}")
+            return []
