@@ -51,6 +51,37 @@ from src.clerk_verifier import verify_clerk_token
 
 app = FastAPI(title="VOIDAI Enterprise RAG")
 
+# Exception handlers ensuring CORS headers are present on all responses (including 500 errors)
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    traceback.print_exc()
+    origin = request.headers.get("origin")
+    response = JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}"}
+    )
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    origin = request.headers.get("origin")
+    response = JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+
 # Enable CORS for Next.js frontend (port 3000) and backend
 app.add_middleware(
     CORSMiddleware,
@@ -276,29 +307,38 @@ async def get_me(current_user: Dict[str, Any] = Depends(get_current_user)):
 @app.get("/api/documents")
 async def get_documents(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Protected: Returns real documents from Supabase DB or vector store."""
-    supabase_docs = supabase_manager.list_documents() if supabase_manager.is_configured() else []
-    
-    if supabase_docs:
-        docs = supabase_docs
-    else:
-        docs = vector_store.list_indexed_documents()
+    try:
+        supabase_docs = supabase_manager.list_documents() if supabase_manager.is_configured() else []
+        
+        if supabase_docs:
+            docs = supabase_docs
+        else:
+            docs = vector_store.list_indexed_documents()
 
-    total_chunks = vector_store.get_total_chunk_count()
-    total_bytes = sum(d.get("file_size", 0) for d in docs)
-    storage_mb = round(total_bytes / (1024 * 1024), 2) if total_bytes > 0 else 0.0
+        total_chunks = vector_store.get_total_chunk_count()
+        total_bytes = sum((d.get("file_size") or 0) for d in docs)
+        storage_mb = round(total_bytes / (1024 * 1024), 2) if total_bytes > 0 else 0.0
 
-    return {
-        "documents": docs,
-        "total_documents": len(docs),
-        "total_chunks": total_chunks,
-        "storage_mb": storage_mb
-    }
+        return {
+            "documents": docs,
+            "total_documents": len(docs),
+            "total_chunks": total_chunks,
+            "storage_mb": storage_mb
+        }
+    except Exception as e:
+        print(f"[get_documents] Warning: {e}")
+        return {
+            "documents": [],
+            "total_documents": 0,
+            "total_chunks": 0,
+            "storage_mb": 0.0
+        }
 
 
 @app.post("/api/upload")
 async def upload_documents(
     files: Optional[List[UploadFile]] = File(default=None),
-    file: Optional[List[UploadFile]] = File(default=None),
+    file: Optional[UploadFile] = File(default=None),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """
@@ -309,7 +349,7 @@ async def upload_documents(
     if files:
         all_files.extend(files)
     if file:
-        all_files.extend(file)
+        all_files.append(file)
 
     # Filter out empty entries
     all_files = [f for f in all_files if f and f.filename]
