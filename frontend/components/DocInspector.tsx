@@ -28,10 +28,9 @@ export default function DocInspector({
 }: DocInspectorProps) {
   const hasDoc = !!filename && filename !== "--";
 
-  // Helper to highlight matching phrase safely
   const renderHighlightedContent = () => {
     if (!pageContent) {
-      return <p className="text-[#737373] font-mono">No text content available on this page.</p>;
+      return <p className="text-[#737373] font-sans text-xs">No text on this page.</p>;
     }
 
     const paragraphs = pageContent.split("\n\n");
@@ -68,8 +67,8 @@ export default function DocInspector({
       {/* Header Toolbar */}
       <div className="h-9 px-3.5 border-b border-[#222222] flex items-center justify-between text-xs text-[#A3A3A3] select-none bg-[#0A0A0A]">
         <div className="flex items-center space-x-2">
-          <span className="text-[10px] tracking-wider text-[#737373] uppercase">
-            DOCUMENT INSPECTOR
+          <span className="text-xs font-semibold text-white">
+            Viewer
           </span>
         </div>
 
@@ -116,7 +115,7 @@ export default function DocInspector({
         <div>
           <button
             onClick={onClearHighlight}
-            title="Reset Highlight"
+            title="Clear highlight"
             className="hover:text-white"
           >
             <X className="w-3.5 h-3.5" />
@@ -128,29 +127,25 @@ export default function DocInspector({
       <div className="flex-1 overflow-y-auto p-4 flex justify-center bg-[#000000]">
         {!hasDoc ? (
           /* Standby Empty State */
-          <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-3 my-auto">
-            <div className="w-8 h-8 rounded border border-[#222222] bg-[#141414] flex items-center justify-center text-[#737373] font-mono text-xs">
-              ∅
+          <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-2 my-auto">
+            <div className="text-sm font-medium text-white">
+              No document selected
             </div>
-            <div className="text-xs font-mono text-[#A3A3A3] uppercase tracking-wider">
-              No Document Selected
-            </div>
-            <p className="text-[11px] text-[#525252] max-w-xs font-sans leading-relaxed">
-              Select a document from the index repository or click a citation badge in chat to inspect verified source pages.
+            <p className="text-xs text-[#737373] max-w-xs font-sans leading-relaxed">
+              Click any file in the sidebar or a citation in chat to preview it here.
             </p>
           </div>
         ) : (
-          /* Document Paper Sheet */
+          /* Document Sheet */
           <div
             style={{ transform: `scale(${zoom / 100})` }}
             className="w-full max-w-[440px] bg-[#0A0A0A] border border-[#222222] rounded p-6 text-[12px] text-[#D4D4D4] leading-relaxed space-y-4 transition-transform duration-150 origin-top h-fit"
           >
             {/* Header */}
-            <div className="pb-2.5 border-b border-[#222222] text-[10px] font-mono tracking-widest text-[#A3A3A3] uppercase flex items-center justify-between">
-              <span className="truncate max-w-[280px]" title={filename}>
+            <div className="pb-2.5 border-b border-[#222222] text-xs font-mono text-white flex items-center justify-between">
+              <span className="truncate max-w-[320px]" title={filename}>
                 {filename}
               </span>
-              <span className="text-[#525252]">PAGE VERIFIED</span>
             </div>
 
             {/* Content */}
@@ -160,7 +155,7 @@ export default function DocInspector({
 
             {/* Footer */}
             <div className="pt-4 text-center text-[10px] font-mono text-[#525252] border-t border-[#141414]">
-              PAGE {currentPage} OF {totalPages}
+              Page {currentPage} of {totalPages}
             </div>
           </div>
         )}
@@ -172,4 +167,3 @@ export default function DocInspector({
 function escapeRegex(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-

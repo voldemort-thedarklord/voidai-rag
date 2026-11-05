@@ -15,8 +15,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VOIDAI // Enterprise Knowledge & Document Intelligence",
-  description: "Enterprise Document Intelligence and Semantic Retrieval Platform",
+  title: "voidai",
+  description: "Document search and assistant",
 };
 
 export default function RootLayout({
