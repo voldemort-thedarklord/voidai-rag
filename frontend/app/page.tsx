@@ -156,7 +156,13 @@ export default function WorkspacePage() {
   };
 
   const handleUploadSingle = async (file: File) => {
-    const token = await getToken();
+    // Request a fresh session token before each file upload to avoid expiration during long batch transfers
+    let token: string | null = null;
+    try {
+      token = await getToken({ skipCache: true });
+    } catch {
+      token = await getToken();
+    }
     await uploadDocument(file, token || undefined);
     await loadDocuments();
   };

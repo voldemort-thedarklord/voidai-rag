@@ -104,6 +104,25 @@ export default function IngestModal({
         completedCount++;
         setSelectedFiles((prev) => prev.filter((f) => f.name !== file.name));
       } catch (err: any) {
+        // If token expired or temporary network hiccup, retry once with a fresh token
+        if (
+          err.message &&
+          (err.message.includes("token") ||
+            err.message.includes("401") ||
+            err.message.includes("fetch"))
+        ) {
+          try {
+            setProgressStatus(`Refreshing session for ${file.name}...`);
+            await new Promise((r) => setTimeout(r, 1000));
+            await onUploadSingle(file);
+            completedCount++;
+            setSelectedFiles((prev) => prev.filter((f) => f.name !== file.name));
+            continue;
+          } catch (retryErr: any) {
+            errors.push(`${file.name}: ${retryErr.message}`);
+            continue;
+          }
+        }
         errors.push(`${file.name}: ${err.message}`);
       }
     }
