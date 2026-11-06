@@ -184,14 +184,17 @@ class SupabaseManager:
         ).execute()
         return res.data[0] if res.data else payload
 
-    def list_documents(self) -> List[Dict[str, Any]]:
-        """List all indexed documents stored in Supabase."""
+    def list_documents(self, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """List indexed documents stored in Supabase for the authenticated user."""
         if not self.client:
             return []
         try:
-            res = self.client.table("voidai_documents").select("*").order("created_at", desc=True).execute()
+            query = self.client.table("voidai_documents").select("*").order("created_at", desc=True)
+            if user_id:
+                query = query.eq("uploaded_by", user_id)
+            res = query.execute()
             docs = []
-            for d in res.data:
+            for d in (res.data or []):
                 docs.append({
                     "source": d["filename"],
                     "total_chunks": d.get("chunk_count", 0),
@@ -204,13 +207,16 @@ class SupabaseManager:
             print(f"[SupabaseManager] Error listing documents: {e}")
             return []
 
-    def delete_document(self, filename: str) -> bool:
+    def delete_document(self, filename: str, user_id: Optional[str] = None) -> bool:
         """Delete file from Supabase storage and delete from database."""
         if not self.client:
             return False
         try:
-            # 1. Delete from database
-            self.client.table("voidai_documents").delete().eq("filename", filename).execute()
+            # 1. Delete from database (scoped to user if user_id given)
+            query = self.client.table("voidai_documents").delete().eq("filename", filename)
+            if user_id:
+                query = query.eq("uploaded_by", user_id)
+            query.execute()
             # 2. Delete from storage
             self.client.storage.from_("documents").remove([filename])
             return True

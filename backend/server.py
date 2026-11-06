@@ -306,16 +306,15 @@ async def get_me(current_user: Dict[str, Any] = Depends(get_current_user)):
 
 @app.get("/api/documents")
 async def get_documents(current_user: Dict[str, Any] = Depends(get_current_user)):
-    """Protected: Returns real documents from Supabase DB or vector store."""
+    """Protected: Returns real documents for authenticated user from Supabase DB."""
     try:
-        supabase_docs = supabase_manager.list_documents() if supabase_manager.is_configured() else []
-        
-        if supabase_docs:
-            docs = supabase_docs
+        user_id = current_user.get("user_id")
+        if supabase_manager.is_configured():
+            docs = supabase_manager.list_documents(user_id=user_id)
         else:
             docs = vector_store.list_indexed_documents()
 
-        total_chunks = vector_store.get_total_chunk_count()
+        total_chunks = sum((d.get("total_chunks") or 0) for d in docs)
         total_bytes = sum((d.get("file_size") or 0) for d in docs)
         storage_mb = round(total_bytes / (1024 * 1024), 2) if total_bytes > 0 else 0.0
 
@@ -471,11 +470,12 @@ async def delete_document(
 ):
     """Protected: Deletes document from ChromaDB vector store, Supabase Storage, and Supabase DB."""
     try:
+        user_id = current_user.get("user_id")
         # ChromaDB deletion
         count = vector_store.delete_document(filename)
-        # Supabase deletion
+        # Supabase deletion (scoped to user)
         if supabase_manager.is_configured():
-            supabase_manager.delete_document(filename)
+            supabase_manager.delete_document(filename, user_id=user_id)
         return {"success": True, "filename": filename, "chunks_deleted": count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
