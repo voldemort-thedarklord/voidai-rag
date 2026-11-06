@@ -14,6 +14,7 @@ import {
   uploadDocument,
   sendChatMessage,
   fetchChatHistory,
+  clearChatHistory,
 } from "@/lib/api";
 import { DocumentItem, ChatMessage } from "@/types";
 import { MessageSquare, Files, FileText } from "lucide-react";
@@ -193,6 +194,18 @@ export default function WorkspacePage() {
     setMobileTab("viewer");
   };
 
+  const handleClearChat = async () => {
+    if (!confirm("Are you sure you want to clear your entire chat history?")) return;
+    try {
+      const token = await getToken();
+      await clearChatHistory(token || undefined);
+      setMessages([]);
+    } catch (err) {
+      console.error("Failed to clear chat history:", err);
+      alert("Failed to clear chat history. Please try again.");
+    }
+  };
+
   const handleSelectDoc = (source: string) => {
     loadDocPage(source, 1);
     // On mobile, auto-switch to viewer
@@ -327,6 +340,7 @@ export default function WorkspacePage() {
               messages={messages}
               onSendMessage={handleSendMessage}
               onCitationClick={handleCitationClick}
+              onClearChat={handleClearChat}
               selectedCount={selectedDocs.length}
               loading={chatLoading}
             />

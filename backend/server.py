@@ -543,6 +543,17 @@ async def get_chat_history_endpoint(
     return {"success": True, "history": history}
 
 
+@app.delete("/api/chat/history")
+async def clear_chat_history_endpoint(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Protected: Clears authentic conversation history for authenticated user."""
+    user_id = current_user.get("user_id")
+    if supabase_manager.is_configured():
+        supabase_manager.clear_chat_history(user_id=user_id)
+    return {"success": True, "message": "Chat history cleared successfully"}
+
+
 @app.get("/api/eval")
 async def run_evaluation(
     model: str = DEFAULT_GEMINI_MODEL,

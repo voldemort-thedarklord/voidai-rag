@@ -191,3 +191,17 @@ export async function fetchChatHistory(token?: string): Promise<{
   }
   return res.json();
 }
+
+export async function clearChatHistory(token?: string): Promise<{
+  success: boolean;
+  message?: string;
+}> {
+  const res = await fetch(`${API_BASE}/api/chat/history`, {
+    method: "DELETE",
+    headers: getHeaders(token),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to clear chat history: ${res.statusText}`);
+  }
+  return res.json();
+}

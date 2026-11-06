@@ -273,3 +273,17 @@ class SupabaseManager:
         except Exception as e:
             print(f"[SupabaseManager] Error getting chat history: {e}")
             return []
+
+    def clear_chat_history(self, user_id: Optional[str] = None) -> bool:
+        """Delete all chat history records for the authenticated user from Supabase."""
+        if not self.client:
+            return False
+        try:
+            query = self.client.table("voidai_chat_history").delete()
+            if user_id:
+                query = query.eq("user_id", user_id)
+            query.execute()
+            return True
+        except Exception as e:
+            print(f"[SupabaseManager] Error clearing chat history: {e}")
+            return False
