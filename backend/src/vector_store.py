@@ -108,6 +108,43 @@ class VectorStoreManager:
 
         return formatted_results
 
+    def get_document_overview_chunks(
+        self,
+        document_names: List[str],
+        max_chunks_per_doc: int = 2
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve representative introductory/overview chunks for a list of documents.
+        Guarantees that every selected document is represented in context.
+        """
+        overview_chunks: List[Dict[str, Any]] = []
+        for doc_name in document_names:
+            try:
+                data = self.collection.get(
+                    where={"source": doc_name},
+                    limit=max_chunks_per_doc,
+                    include=["documents", "metadatas"]
+                )
+                if data and data.get("documents"):
+                    for doc, meta in zip(data["documents"], data["metadatas"]):
+                        overview_chunks.append({
+                            "text": doc,
+                            "metadata": meta,
+                            "distance": 0.1,
+                            "similarity_score": 0.90
+                        })
+            except Exception as e:
+                print(f"[VectorStore] Overview chunk retrieval error for {doc_name}: {e}")
+        return overview_chunks
+
+    def has_document(self, filename: str) -> bool:
+        """Check if at least one chunk for filename exists in the vector collection."""
+        try:
+            res = self.collection.get(where={"source": filename}, limit=1)
+            return bool(res and res.get("ids"))
+        except Exception:
+            return False
+
     def list_indexed_documents(self) -> List[Dict[str, Any]]:
         """
         Scan collection metadatas to return summary statistics of all indexed documents.

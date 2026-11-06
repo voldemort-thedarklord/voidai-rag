@@ -24,7 +24,8 @@ GUIDELINES:
 1. Base your answer on the provided document excerpts and document inventory.
 2. For factual statements from excerpts, cite the document name and page number, e.g.: [document.pdf, Page 1].
 3. If the user asks what documents are attached, uploaded, or available, list the filenames clearly from the available documents.
-4. If the provided excerpts do not contain the answer, politely state:
+4. If the user asks to summarize all or multiple documents, provide a structured summary covering each document present in the excerpts with clear headings/bullet points and citations [Filename, Page X].
+5. If the provided excerpts do not contain the answer, politely state:
    "The uploaded documents do not contain sufficient information to answer this question."
 """
 
@@ -49,9 +50,13 @@ class RAGPipeline:
         """
         start_time = time.time()
 
-        # Retrieve available documents list
-        indexed_docs = self.vector_store.list_indexed_documents()
-        doc_names = [d["source"] for d in indexed_docs]
+        # Retrieve available documents list (respecting selected_documents filter)
+        if selected_documents:
+            doc_names = list(selected_documents)
+            indexed_docs = [{"source": name, "total_chunks": 1, "max_pages": 1} for name in doc_names]
+        else:
+            indexed_docs = self.vector_store.list_indexed_documents()
+            doc_names = [d["source"] for d in indexed_docs]
 
         # Handle queries asking what files/documents are attached
         q_lower = query.lower()
@@ -67,6 +72,11 @@ class RAGPipeline:
             "attached documents"
         ])
 
+        is_summary_query = any(phrase in q_lower for phrase in [
+            "summarize", "summary", "overview", "brief overview", "synopsis",
+            "what are these files", "what are these documents", "outline", "what do these documents say"
+        ])
+
         # Vector retrieval
         retrieval_start = time.time()
         retrieved_docs = self.vector_store.search(
@@ -74,6 +84,19 @@ class RAGPipeline:
             top_k=top_k,
             selected_documents=selected_documents
         )
+
+        # If summary or multi-document overview query, guarantee representative chunks across all documents
+        if is_summary_query and doc_names:
+            overview_chunks = self.vector_store.get_document_overview_chunks(
+                document_names=doc_names,
+                max_chunks_per_doc=2
+            )
+            existing_texts = {d["text"] for d in retrieved_docs}
+            for ov_chunk in overview_chunks:
+                if ov_chunk["text"] not in existing_texts:
+                    retrieved_docs.append(ov_chunk)
+                    existing_texts.add(ov_chunk["text"])
+
         retrieval_duration = time.time() - retrieval_start
 
         # If user asks for document list and we have documents
@@ -103,7 +126,7 @@ class RAGPipeline:
             if not doc_names:
                 msg = "No documents have been uploaded yet. Please upload a PDF, DOCX, or text file to begin."
             else:
-                msg = f"No relevant information was found in your uploaded documents ({', '.join(doc_names)}) for your query."
+                msg = f"The selected documents ({', '.join(doc_names)}) could not be read or have no text content available."
             return {
                 "answer": msg,
                 "citations": [],

@@ -1,8 +1,28 @@
 import { DocumentItem, ChatMessage } from "@/types";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://voidai-backend-549725275383.us-central1.run.app";
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+// Never route to deprecated onrender.com backend
+export const PRIMARY_API_BASE =
+  RAW_API_BASE && !RAW_API_BASE.includes("onrender.com")
+    ? RAW_API_BASE
+    : "https://voidai-backend-549725275383.us-central1.run.app";
+
+async function apiFetch(path: string, options?: RequestInit): Promise<Response> {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  try {
+    return await fetch(`${PRIMARY_API_BASE}${normalizedPath}`, options);
+  } catch (err: any) {
+    // If direct cross-origin call fails (e.g. adblocker, network error), retry via same-origin rewrite (/api/...)
+    if (PRIMARY_API_BASE && typeof window !== "undefined") {
+      try {
+        return await fetch(normalizedPath, options);
+      } catch {
+        throw err;
+      }
+    }
+    throw err;
+  }
+}
 
 function getHeaders(token?: string): HeadersInit {
   const headers: HeadersInit = {
@@ -20,7 +40,7 @@ export async function fetchDocuments(token?: string): Promise<{
   total_chunks: number;
   storage_mb: number;
 }> {
-  const res = await fetch(`${API_BASE}/api/documents`, {
+  const res = await apiFetch("/api/documents", {
     headers: getHeaders(token),
   });
   if (!res.ok) {
@@ -39,8 +59,8 @@ export async function fetchDocumentPage(
   total_pages: number;
   text: string;
 }> {
-  const res = await fetch(
-    `${API_BASE}/api/document/${encodeURIComponent(filename)}/page/${pageNum}`,
+  const res = await apiFetch(
+    `/api/document/${encodeURIComponent(filename)}/page/${pageNum}`,
     {
       headers: getHeaders(token),
     }
@@ -55,8 +75,8 @@ export async function deleteDocument(
   filename: string,
   token?: string
 ): Promise<{ success: boolean; filename: string }> {
-  const res = await fetch(
-    `${API_BASE}/api/document/${encodeURIComponent(filename)}`,
+  const res = await apiFetch(
+    `/api/document/${encodeURIComponent(filename)}`,
     {
       method: "DELETE",
       headers: getHeaders(token),
@@ -80,7 +100,7 @@ export async function uploadDocument(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}/api/upload`, {
+  const res = await apiFetch("/api/upload", {
     method: "POST",
     headers,
     body: formData,
@@ -139,7 +159,7 @@ export async function sendChatMessage(
   selectedDocuments?: string[],
   token?: string
 ): Promise<any> {
-  const res = await fetch(`${API_BASE}/api/chat`, {
+  const res = await apiFetch("/api/chat", {
     method: "POST",
     headers: getHeaders(token),
     body: JSON.stringify({
@@ -161,7 +181,7 @@ export async function fetchSystemStatus(): Promise<{
   default_model: string;
 }> {
   try {
-    const res = await fetch(`${API_BASE}/api/system/status`);
+    const res = await apiFetch("/api/system/status");
     if (res.ok) return res.json();
   } catch (e) {
     console.warn("Could not fetch system status:", e);
@@ -183,7 +203,7 @@ export async function fetchChatHistory(token?: string): Promise<{
     created_at?: string;
   }>;
 }> {
-  const res = await fetch(`${API_BASE}/api/chat/history`, {
+  const res = await apiFetch("/api/chat/history", {
     headers: getHeaders(token),
   });
   if (!res.ok) {
@@ -196,7 +216,7 @@ export async function clearChatHistory(token?: string): Promise<{
   success: boolean;
   message?: string;
 }> {
-  const res = await fetch(`${API_BASE}/api/chat/history`, {
+  const res = await apiFetch("/api/chat/history", {
     method: "DELETE",
     headers: getHeaders(token),
   });

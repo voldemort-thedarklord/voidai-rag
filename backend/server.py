@@ -481,6 +481,41 @@ async def delete_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def ensure_documents_indexed(target_docs: List[str]):
+    """
+    Ensures all target documents are present in ChromaDB.
+    If missing (e.g. fresh ephemeral container instance),
+    downloads file from Supabase Storage and indexes on-the-fly.
+    """
+    for doc_name in target_docs:
+        if not doc_name:
+            continue
+        if vector_store.has_document(doc_name):
+            continue
+        print(f"[IndexSync] Document '{doc_name}' missing from ChromaDB. Auto-syncing from Supabase...")
+        target_path = UPLOADS_DIR / doc_name
+        if not target_path.exists():
+            target_path = SAMPLE_POLICIES_DIR / doc_name
+
+        # Download from Supabase if not on disk
+        if not target_path.exists() and supabase_manager.is_configured():
+            b = supabase_manager.download_file_bytes(doc_name)
+            if b:
+                target_path = UPLOADS_DIR / doc_name
+                with open(target_path, "wb") as f:
+                    f.write(b)
+
+        # Process and index
+        if target_path.exists():
+            try:
+                processed = doc_processor.process_file(target_path)
+                if processed and processed.get("chunks"):
+                    vector_store.add_documents(processed["chunks"])
+                    print(f"[IndexSync] Successfully indexed {len(processed['chunks'])} chunks for '{doc_name}'")
+            except Exception as e:
+                print(f"[IndexSync] Failed indexing '{doc_name}': {e}")
+
+
 @app.post("/api/chat")
 async def chat_endpoint(
     req: ChatRequest,
@@ -491,6 +526,14 @@ async def chat_endpoint(
         user_id = current_user.get("user_id")
         active_provider = (req.provider or DEFAULT_LLM_PROVIDER).lower()
         active_model = req.model or (DEFAULT_GEMINI_MODEL if active_provider == "gemini" else DEFAULT_OLLAMA_MODEL)
+
+        target_docs = req.selected_documents
+        if not target_docs and supabase_manager.is_configured():
+            user_docs = supabase_manager.list_documents(user_id=user_id)
+            target_docs = [d["source"] for d in user_docs]
+
+        if target_docs:
+            ensure_documents_indexed(target_docs)
 
         result = rag_pipeline.run(
             query=req.query,

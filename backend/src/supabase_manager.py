@@ -212,26 +212,48 @@ class SupabaseManager:
         if not self.client:
             return False
         try:
-            # 1. Delete from database (scoped to user if user_id given)
+            # 1. Lookup storage_path before deleting record
+            storage_path = filename
+            query_lookup = self.client.table("voidai_documents").select("storage_path").eq("filename", filename)
+            if user_id:
+                query_lookup = query_lookup.eq("uploaded_by", user_id)
+            lookup_res = query_lookup.limit(1).execute()
+            if lookup_res.data and lookup_res.data[0].get("storage_path"):
+                storage_path = lookup_res.data[0]["storage_path"]
+
+            # 2. Delete from database (scoped to user if user_id given)
             query = self.client.table("voidai_documents").delete().eq("filename", filename)
             if user_id:
                 query = query.eq("uploaded_by", user_id)
             query.execute()
-            # 2. Delete from storage
-            self.client.storage.from_("documents").remove([filename])
+
+            # 3. Delete from storage using storage_path
+            self.client.storage.from_("documents").remove([storage_path])
+            if storage_path != filename:
+                self.client.storage.from_("documents").remove([filename])
             return True
         except Exception as e:
             print(f"[SupabaseManager] Error deleting document: {e}")
             return False
 
     def download_file_bytes(self, filename: str) -> Optional[bytes]:
-        """Download file bytes from Supabase storage."""
+        """Download file bytes from Supabase storage, using storage_path mapping if present."""
         if not self.client:
             return None
         try:
-            return self.client.storage.from_("documents").download(filename)
+            storage_path = filename
+            res = self.client.table("voidai_documents").select("storage_path").eq("filename", filename).limit(1).execute()
+            if res.data and res.data[0].get("storage_path"):
+                storage_path = res.data[0]["storage_path"]
+
+            try:
+                return self.client.storage.from_("documents").download(storage_path)
+            except Exception:
+                if storage_path != filename:
+                    return self.client.storage.from_("documents").download(filename)
+                raise
         except Exception as e:
-            print(f"[SupabaseManager] Error downloading file: {e}")
+            print(f"[SupabaseManager] Error downloading file {filename}: {e}")
             return None
 
     # ==========================================
