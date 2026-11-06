@@ -12,14 +12,17 @@ import {
   fetchDocumentPage,
   deleteDocument,
   uploadDocument,
-  uploadDocuments,
   sendChatMessage,
   fetchChatHistory,
 } from "@/lib/api";
 import { DocumentItem, ChatMessage } from "@/types";
+import { MessageSquare, Files, FileText } from "lucide-react";
 
 export default function WorkspacePage() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
+
+  // Mobile tab state: 'chat' | 'docs' | 'viewer'
+  const [mobileTab, setMobileTab] = useState<"chat" | "docs" | "viewer">("chat");
 
   // Repository state
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
@@ -186,6 +189,14 @@ export default function WorkspacePage() {
     snippet: string
   ) => {
     loadDocPage(source, page, snippet);
+    // On mobile, auto-switch to viewer so user sees the highlighted citation
+    setMobileTab("viewer");
+  };
+
+  const handleSelectDoc = (source: string) => {
+    loadDocPage(source, 1);
+    // On mobile, auto-switch to viewer
+    setMobileTab("viewer");
   };
 
   const handleZoom = (delta: number) => {
@@ -223,12 +234,12 @@ export default function WorkspacePage() {
 
           <div className="flex items-center justify-center space-x-3 pt-2 font-mono">
             <SignInButton mode="modal">
-              <button className="px-5 py-2 text-xs font-semibold text-black bg-white hover:bg-[#E5E5E5] rounded-md transition">
+              <button className="px-5 py-2 text-xs font-semibold text-black bg-white hover:bg-[#E5E5E5] active:scale-95 rounded-md transition">
                 Sign in
               </button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <button className="px-5 py-2 text-xs text-[#D4D4D4] hover:text-white bg-[#141414] border border-[#222222] hover:border-[#525252] rounded-md transition">
+              <button className="px-5 py-2 text-xs text-[#D4D4D4] hover:text-white bg-[#141414] border border-[#222222] hover:border-[#525252] active:scale-95 rounded-md transition">
                 Sign up
               </button>
             </SignUpButton>
@@ -239,47 +250,107 @@ export default function WorkspacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#000000] text-[#E5E5E5] flex flex-col justify-between p-3 sm:p-5">
+    <div className="min-h-screen bg-[#000000] text-[#E5E5E5] flex flex-col justify-between p-2.5 sm:p-5">
       {/* Header */}
       <Header onOpenUpload={() => setIsUploadOpen(true)} />
 
-      {/* Main 3-Panel Workspace Container */}
-      <main className="w-full max-w-[1420px] mx-auto my-3 flex-1 flex flex-col justify-center">
-        <div className="w-full bg-[#0A0A0A] border border-[#222222] rounded-xl overflow-hidden flex h-[calc(100vh-90px)] max-h-[820px] shadow-2xl">
+      {/* Main Container */}
+      <main className="w-full max-w-[1420px] mx-auto my-2 sm:my-3 flex-1 flex flex-col justify-center">
+        {/* Mobile View Switcher (< lg screens) */}
+        <div className="lg:hidden flex items-center justify-around bg-[#0A0A0A] border border-[#222222] rounded-lg p-1 mb-2 font-mono text-xs select-none shadow-xs">
+          <button
+            type="button"
+            onClick={() => setMobileTab("chat")}
+            className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition ${
+              mobileTab === "chat"
+                ? "bg-[#1F1F1F] text-white font-semibold shadow-xs"
+                : "text-[#737373] hover:text-[#D4D4D4]"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Chat</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("docs")}
+            className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition ${
+              mobileTab === "docs"
+                ? "bg-[#1F1F1F] text-white font-semibold shadow-xs"
+                : "text-[#737373] hover:text-[#D4D4D4]"
+            }`}
+          >
+            <Files className="w-3.5 h-3.5" />
+            <span>Docs ({documents.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("viewer")}
+            className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition ${
+              mobileTab === "viewer"
+                ? "bg-[#1F1F1F] text-white font-semibold shadow-xs"
+                : "text-[#737373] hover:text-[#D4D4D4]"
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Viewer{activeDocName ? " •" : ""}</span>
+          </button>
+        </div>
+
+        {/* 3-Panel Workspace Container */}
+        <div className="w-full bg-[#0A0A0A] border border-[#222222] rounded-xl overflow-hidden flex h-[calc(100dvh-130px)] sm:h-[calc(100dvh-110px)] lg:h-[calc(100vh-90px)] max-h-[860px] shadow-2xl">
           {/* Column 1: Documents Sidebar */}
-          <Sidebar
-            documents={documents}
-            selectedDocs={selectedDocs}
-            onToggleSelectAll={handleToggleSelectAll}
-            onToggleDoc={handleToggleDoc}
-            onSelectDoc={(source) => loadDocPage(source, 1)}
-            onDeleteDoc={handleDeleteDoc}
-            onOpenUpload={() => setIsUploadOpen(true)}
-            onRefresh={loadDocuments}
-            loading={docsLoading}
-          />
+          <div
+            className={`w-full lg:w-auto h-full ${
+              mobileTab === "docs" ? "flex" : "hidden lg:flex"
+            }`}
+          >
+            <Sidebar
+              documents={documents}
+              selectedDocs={selectedDocs}
+              onToggleSelectAll={handleToggleSelectAll}
+              onToggleDoc={handleToggleDoc}
+              onSelectDoc={handleSelectDoc}
+              onDeleteDoc={handleDeleteDoc}
+              onOpenUpload={() => setIsUploadOpen(true)}
+              onRefresh={loadDocuments}
+              loading={docsLoading}
+            />
+          </div>
 
           {/* Column 2: Chat Pane */}
-          <ChatPanel
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            onCitationClick={handleCitationClick}
-            selectedCount={selectedDocs.length}
-            loading={chatLoading}
-          />
+          <div
+            className={`w-full flex-1 h-full ${
+              mobileTab === "chat" ? "flex" : "hidden lg:flex"
+            }`}
+          >
+            <ChatPanel
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              onCitationClick={handleCitationClick}
+              selectedCount={selectedDocs.length}
+              loading={chatLoading}
+            />
+          </div>
 
           {/* Column 3: Document Inspector */}
-          <DocInspector
-            filename={activeDocName}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            pageContent={pageContent}
-            highlightPhrase={highlightPhrase}
-            zoom={zoom}
-            onPageChange={handlePageChange}
-            onZoomChange={handleZoom}
-            onClearHighlight={() => setHighlightPhrase("")}
-          />
+          <div
+            className={`w-full lg:w-auto h-full ${
+              mobileTab === "viewer" ? "flex" : "hidden lg:flex"
+            }`}
+          >
+            <DocInspector
+              filename={activeDocName}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageContent={pageContent}
+              highlightPhrase={highlightPhrase}
+              zoom={zoom}
+              onPageChange={handlePageChange}
+              onZoomChange={handleZoom}
+              onClearHighlight={() => setHighlightPhrase("")}
+              onBackToChat={() => setMobileTab("chat")}
+            />
+          </div>
         </div>
       </main>
 

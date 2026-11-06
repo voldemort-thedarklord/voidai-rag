@@ -64,6 +64,7 @@ flowchart LR
 | **Styling** | Tailwind CSS | `v4.0` | Minimalist dark-mode voidai theme (`#0A0A0A` canvas, `#141414` cards, `#222222` borders) |
 | **Icons** | Lucide React | `^1.16.0` | Feather-light SVG iconography |
 | **Authentication** | Clerk Next.js SDK | `^6.12.0` | Universal authentication, managed sessions, and sign-in / sign-up flows |
+| **Mobile Layout** | Adaptive View Switcher | Single-pane mobile switcher (`chat`, `docs`, `viewer`), dynamic viewport `100dvh`, touch targets $\ge 36\text{px}$ |
 | **Hosting** | Vercel Edge Network | Custom Domain | Global CDN deployment on `https://www.voidai.in` |
 
 ---
@@ -158,3 +159,4 @@ flowchart LR
    - Configured Next.js rewrites (`/api/*`) on `www.voidai.in` to proxy backend requests server-to-server. This eliminated cross-origin CORS preflight overhead and prevents privacy-focused browsers (Brave Shields, Safari ITP) from blocking API calls.
 4. **Sequential Client-Side Ingestion**:
    - Multi-document uploads are queued and uploaded progressively file-by-file with live status (`Uploading document.pdf (2/5)...`). This prevents memory spikes and ensures zero timeouts during batch uploads.
+
