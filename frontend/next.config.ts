@@ -8,7 +8,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://voidai-rag-backend.onrender.com/api/:path*",
+        destination:
+          "https://voidai-backend-549725275383.us-central1.run.app/api/:path*",
       },
     ];
   },

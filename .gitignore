@@ -14,6 +14,8 @@ backend/venv/
 backend/chroma_db/
 backend/data/uploads/
 backend/.env
+backend/env_vars.yaml
+env_vars.yaml
 backend/__pycache__/
 
 # Frontend

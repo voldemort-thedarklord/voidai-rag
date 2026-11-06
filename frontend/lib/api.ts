@@ -1,6 +1,8 @@
 import { DocumentItem, ChatMessage } from "@/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://voidai-backend-549725275383.us-central1.run.app";
 
 function getHeaders(token?: string): HeadersInit {
   const headers: HeadersInit = {
